@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.railway.managementsystem.user.dto.UserDto;
 import com.railway.managementsystem.user.model.User;
+import com.railway.managementsystem.user.dto.UserSimpleDto;
 import org.apache.ibatis.annotations.Mapper;
 
 public interface UserMapper extends BaseMapper<User> {
@@ -17,5 +18,6 @@ public interface UserMapper extends BaseMapper<User> {
      */
     IPage<UserDto> selectUserPage(IPage<?> page);  // Use a wildcard IPage for input
 
+    IPage<UserSimpleDto> selectUsersByDepartmentPage(IPage<UserSimpleDto> page, Long departmentId);
     // You can add more custom queries as needed
 }

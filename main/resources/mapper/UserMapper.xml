@@ -15,4 +15,17 @@
         SELECT id, username, full_name, employee_id  <!-- Customize your SQL here, e.g., with joins -->
         FROM users
     </select>
+
+    <!-- Result Map for UserSimpleDto -->
+    <resultMap id="UserSimpleDtoResultMap" type="com.railway.managementsystem.user.dto.UserSimpleDto">
+        <id column="id" property="id"/>
+        <result column="full_name" property="fullName"/>
+        <result column="employee_id" property="employeeId"/>
+        <result column="job_title" property="jobTitle"/>
+        <result column="mobile_phone" property="mobilePhone"/>
+    </resultMap>
+
+    <select id="selectUsersByDepartmentPage" resultMap="UserSimpleDtoResultMap">
+        SELECT id, full_name, employee_id, job_title, mobile_phone FROM users WHERE department_id = #{departmentId}
+    </select>
 </mapper>

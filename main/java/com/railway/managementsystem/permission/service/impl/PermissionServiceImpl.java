@@ -1,11 +1,12 @@
 package com.railway.managementsystem.permission.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.railway.managementsystem.permission.model.Permission;
 import com.railway.managementsystem.permission.service.PermissionService;
 import com.railway.managementsystem.role.model.Role;
 import com.railway.managementsystem.user.mapper.UserMapper;
 import com.railway.managementsystem.user.model.User;
-import com.railway.managementsystem.user.repository.UserMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -38,7 +39,7 @@ public class PermissionServiceImpl implements PermissionService {
     @Override
     public Set<String> getPermissionsForEmployee(String employeeId) {
         // 1. 使用高效的查询获取用户、角色和权限信息
-        User user = userMapper.;
+        User user = userMapper.selectOne(Wrappers.query(User.class).eq("employeeId",employeeId));;
 
         // 2. 直接从用户关联的角色中提取所有权限
         return user.getRoles().stream()
@@ -57,8 +58,7 @@ public class PermissionServiceImpl implements PermissionService {
         // 1. 获取当前登录用户的信息
         // 实际项目中，用户信息通常在登录时存入 SecurityContext
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
-        User currentUser = userMapper.(currentUsername)
-                .orElseThrow(() -> new UsernameNotFoundException("Current user not found."));
+        User currentUser = userMapper.selectOne(Wrappers.query(User.class).eq("employeeId",currentUsername));
 
         if (currentUser.getDepartment() == null) {
             // 如果是超级管理员或无部门用户，可以定义不同逻辑，例如返回所有角色

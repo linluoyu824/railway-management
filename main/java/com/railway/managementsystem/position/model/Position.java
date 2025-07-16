@@ -1,39 +1,30 @@
 package com.railway.managementsystem.position.model;
 
+import com.baomidou.mybatisplus.annotation.*;
 import com.railway.managementsystem.department.model.Department;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.Filter;
 
 @Getter
 @Setter
 @EqualsAndHashCode(of = "id")
-@Entity
-@Table(name = "positions")
-@Filter(name = "tenantFilter")
+@TableName("positions")
 public class Position {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @TableId(type = IdType.AUTO)
     private Long id;
 
-    @NotBlank(message = "职位名称不能为空")
-    @Size(max = 100)
-    @Column(name = "name", nullable = false, unique = true, length = 100)
     private String name;
 
-    @Size(max = 255)
-    @Column(name = "description")
     private String description;
 
     /**
      * 职位所属的部门 (租户)
      */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "department_id")
+    @TableField(exist = false)
     private Department department;
+
+    @TableField("department_id")
+    private Long departmentId;
 }

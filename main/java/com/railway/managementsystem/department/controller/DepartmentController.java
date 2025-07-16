@@ -1,13 +1,12 @@
 package com.railway.managementsystem.department.controller;
 
 import cn.hutool.core.lang.tree.Tree;
-import cn.hutool.core.util.PageUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.railway.managementsystem.department.model.Department;
 import com.railway.managementsystem.department.service.DepartmentService;
 import com.railway.managementsystem.user.dto.UserSimpleDto;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -35,12 +34,14 @@ public class DepartmentController {
     /**
      * 分页查询部门列表
      *
-     * @param page 分页参数
+     * @param current 当前页码
+     * @param size    每页数量
      * @return 部门分页数据
      */
     @GetMapping
-    public ResponseEntity<Page<Department>> listDepartments(PageUtil page) {
-        Page<Department> departments = departmentService.listDepartments(page);
+    public ResponseEntity<IPage<Department>> listDepartments(@RequestParam(defaultValue = "1") long current, @RequestParam(defaultValue = "10") long size) {
+        IPage<Department> page = new Page<>(current, size);
+        IPage<Department> departments = departmentService.listDepartments(page);
         return ResponseEntity.ok(departments);
     }
 
@@ -48,14 +49,16 @@ public class DepartmentController {
      * 分页查询指定部门下的用户列表
      *
      * @param departmentId 部门ID
-     * @param page     分页参数
+     * @param current      当前页码
+     * @param size         每页数量
      * @return 用户分页数据
      */
     @GetMapping("/{departmentId}/users")
-    public ResponseEntity<Page<UserSimpleDto>> listUsersByDepartment(
+    public ResponseEntity<IPage<UserSimpleDto>> listUsersByDepartment(
             @PathVariable Long departmentId,
-            PageUtil page) {
-        Page<UserSimpleDto> users = departmentService.listUsersByDepartment(departmentId, page);
+            @RequestParam(defaultValue = "1") long current, @RequestParam(defaultValue = "10") long size) {
+        IPage<UserSimpleDto> page = new Page<>(current, size);
+        IPage<UserSimpleDto> users = departmentService.listUsersByDepartment(departmentId, page);
         return ResponseEntity.ok(users);
     }
 
