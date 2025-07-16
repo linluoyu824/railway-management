@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.railway.managementsystem.user.mapper.UserMapper">
+
+    <!-- Result Map to map the query results to UserDto -->
+    <resultMap id="UserDtoResultMap" type="com.railway.managementsystem.user.dto.UserDto">
+        <id column="id" property="id"/>
+        <result column="username" property="username"/>
+        <result column="full_name" property="fullName"/>
+        <result column="employee_id" property="employeeId"/>
+        <!-- Add mappings for other fields if you include them in UserDto -->
+    </resultMap>
+
+    <select id="selectUserPage" resultMap="UserDtoResultMap">
+        SELECT id, username, full_name, employee_id  <!-- Customize your SQL here, e.g., with joins -->
+        FROM users
+    </select>
+</mapper>
