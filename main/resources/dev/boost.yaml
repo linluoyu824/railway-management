@@ -1,0 +1,4 @@
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true  # Enable camelCase mapping
+  mapper-locations: classpath*:mapper/*.xml # Optional: If you use XML mappers
