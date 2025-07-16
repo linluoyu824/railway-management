@@ -2,6 +2,7 @@ package com.railway.managementsystem.user.model;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.railway.managementsystem.department.model.Department;
 import com.railway.managementsystem.role.model.Role;
 import com.railway.managementsystem.position.model.Position;
@@ -60,7 +61,6 @@ public class User {
     @TableField(exist = false)
     private Set<Role> roles = new HashSet<>();
 
-
     @TableField("driver_license_type")
     private DriverLicenseType driverLicenseType; // 使用枚举类型更安全
 
@@ -105,4 +105,5 @@ public class User {
     public String getMaskedMobilePhone() {
         return StrUtil.hide(this.mobilePhone, 3, 7);
     }
+    
 }

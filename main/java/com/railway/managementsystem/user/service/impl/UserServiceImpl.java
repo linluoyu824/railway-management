@@ -12,6 +12,7 @@ import com.railway.managementsystem.user.dto.UserImportResultDto;
 import com.railway.managementsystem.user.dto.UserRegistrationDto;
 import com.railway.managementsystem.user.exception.UserAlreadyExistsException;
 import com.railway.managementsystem.user.model.User;
+import com.railway.managementsystem.user.service.TokenCacheService;
 import com.railway.managementsystem.user.service.UserService;
 import com.railway.managementsystem.user.mapper.UserMapper;
 import com.railway.managementsystem.utils.UserImportListener;
@@ -19,7 +20,6 @@ import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.io.InputStream;
 import java.util.List;
-import java.util.Optional;
 
 @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
 @Service
@@ -29,13 +29,14 @@ public class UserServiceImpl implements UserService{
     private final UserMapper userMapper;
     private final DepartmentMapper departmentMapper;
     private final PositionMapper positionMapper;
+    private final TokenCacheService tokenCacheService; // Inject TokenCacheService
 
-
-    public UserServiceImpl(DelegatingPasswordEncoder passwordEncoder, UserMapper userMapper, DepartmentMapper departmentMapper, PositionMapper positionMapper) {
+    public UserServiceImpl(DelegatingPasswordEncoder passwordEncoder, UserMapper userMapper, DepartmentMapper departmentMapper, PositionMapper positionMapper, TokenCacheService tokenCacheService) {
         this.passwordEncoder = passwordEncoder;
         this.userMapper = userMapper;
         this.departmentMapper = departmentMapper;
         this.positionMapper = positionMapper;
+        this.tokenCacheService = tokenCacheService;
     }
 
     @Override
@@ -100,4 +101,35 @@ public class UserServiceImpl implements UserService{
         EasyExcel.read(inputStream, UserImportDto.class, listener).sheet().doRead();
         return result;
     }
+
+     @Override
+    public boolean validateCredentials(String username, String password) {
+        // 1. 使用自定义的Mapper方法通过用户名查找用户
+        // 该方法在 UserMapper.xml 中定义为 "SELECT * ...", 会包含密码字段
+        User user = userMapper.selectByUsername(username);
+
+        // 2. 如果用户不存在，验证失败
+        if (user == null) {
+            return false;
+        }
+
+        // 3. 使用 Spring Security 的 PasswordEncoder 比对密码
+        return passwordEncoder.matches(password, user.getPassword());
+    }
+
+    // Method to generate a token for a validated user
+    @Override
+    public String generateLoginToken(String username) {
+        return tokenCacheService.generateAndCacheToken(username);
+    }
+
+     //If you need to get user details from the token:
+     public String getUsernameFromToken(String token){
+         return tokenCacheService.getUsernameByToken(token);
+     }
+
+     //Method to invalidate a token
+     public void invalidateToken(String token){
+         tokenCacheService.invalidateToken(token);
+     }
 }

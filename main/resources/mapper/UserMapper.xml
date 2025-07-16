@@ -28,4 +28,8 @@
     <select id="selectUsersByDepartmentPage" resultMap="UserSimpleDtoResultMap">
         SELECT id, full_name, employee_id, job_title, mobile_phone FROM users WHERE department_id = #{departmentId}
     </select>
+
+    <select id="selectByUsername" resultType="com.railway.managementsystem.user.model.User">
+        SELECT * FROM users WHERE username = #{username}
+    </select>
 </mapper>

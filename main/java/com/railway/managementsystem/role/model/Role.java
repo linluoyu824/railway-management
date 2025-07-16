@@ -1,6 +1,7 @@
 package com.railway.managementsystem.role.model;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.railway.managementsystem.department.model.Department;
 import com.railway.managementsystem.permission.model.Permission;
 import lombok.EqualsAndHashCode;

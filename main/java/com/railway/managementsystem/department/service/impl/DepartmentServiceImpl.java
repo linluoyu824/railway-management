@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.railway.managementsystem.department.mapper.DepartmentMapper;
 import com.railway.managementsystem.department.model.Department;
 import com.railway.managementsystem.department.service.DepartmentService;
+import com.railway.managementsystem.exception.UserNotFoundException;
 import com.railway.managementsystem.user.dto.UserSimpleDto;
 import com.railway.managementsystem.user.mapper.UserMapper;
 import com.railway.managementsystem.user.model.User;
@@ -73,7 +74,7 @@ public class DepartmentServiceImpl implements DepartmentService {
     @Override
     public IPage<UserSimpleDto> listUsersByDepartment(Long departmentId, IPage<UserSimpleDto> page) {
         if (departmentMapper.selectById(departmentId) == null) {
-            throw new DataFormatException("Department not found with id: " + departmentId);
+            throw new UserNotFoundException("Department not found with id: " + departmentId);
         }
         // This assumes you have a custom method in UserMapper to do this.
         // Let's define it in UserMapper.xml for clarity.

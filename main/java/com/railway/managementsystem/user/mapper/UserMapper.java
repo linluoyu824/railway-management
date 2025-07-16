@@ -19,5 +19,6 @@ public interface UserMapper extends BaseMapper<User> {
     IPage<UserDto> selectUserPage(IPage<?> page);  // Use a wildcard IPage for input
 
     IPage<UserSimpleDto> selectUsersByDepartmentPage(IPage<UserSimpleDto> page, Long departmentId);
-    // You can add more custom queries as needed
+
+    User selectByUsername(String username);
 }

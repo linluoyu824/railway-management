@@ -3,17 +3,22 @@ package com.railway.managementsystem.user.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import cn.hutool.core.util.PageUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.railway.managementsystem.user.dto.UserDto;
-import com.railway.managementsystem.user.dto.UserImportResultDto;
-import com.railway.managementsystem.user.dto.UserRegistrationDto;
+import com.railway.managementsystem.user.dto.*;
+import com.railway.managementsystem.user.exception.UserAlreadyExistsException;
+import com.railway.managementsystem.user.model.LoginError;
 import com.railway.managementsystem.user.model.User;
 import com.railway.managementsystem.user.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -25,9 +30,34 @@ import java.util.List;
 public class UserController {
     private final UserService userService;
     @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @Autowired
     public UserController(UserService userService) {
         this.userService = userService;
     }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
+        try {
+            if (userService.validateCredentials(loginRequest.getUsername(), loginRequest.getPassword())) {
+                // 登录成功, 生成 Token 并返回
+                String token = userService.generateLoginToken(loginRequest.getUsername());
+                return ResponseEntity.ok().body(new LoginResponse(token));
+            } else {
+                // 登录失败，凭证无效
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
+            }
+        } catch (UsernameNotFoundException e) {
+            // 用户名不存在
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Account not found");
+        } catch (Exception e) {
+            // 其他未知错误
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred");
+        }
+    }
+
+
 
     @PostMapping("/register")
     /**
@@ -42,7 +72,7 @@ public class UserController {
         try {
             User newUser = userService.registerUser(registrationDto);
             return new ResponseEntity<>(newUser, HttpStatus.CREATED);
-        } catch (com.example.railwaymanagementsystem.user.exception.UserAlreadyExistsException e) {
+        } catch (UserAlreadyExistsException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
         }
     }

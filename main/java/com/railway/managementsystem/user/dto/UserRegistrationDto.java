@@ -19,4 +19,6 @@ public class UserRegistrationDto {
 
     @NotBlank(message = "员工号不能为空")
     private String employeeId;
+
+    private String mobilePhone;
 }

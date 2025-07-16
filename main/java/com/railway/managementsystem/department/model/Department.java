@@ -18,7 +18,7 @@ import java.util.Set;
 @TableName("departments")
 public class Department {
 
-    @TableId(type = IdType.AUTO)
+    @TableId(type = IdType.ASSIGN_UUID)
     private Long id;
 
     private String name;

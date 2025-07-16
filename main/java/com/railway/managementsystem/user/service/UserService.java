@@ -47,4 +47,16 @@ public interface UserService {
      * @return
      */
     UserImportResultDto importUsersFromExcel(InputStream inputStream);
+    
+    /**
+     * 验证登录凭证是否正确
+     *
+     * @param username 用户名
+     * @param password 密码
+     * @return 如果凭证有效则返回 true, 否则返回 false
+     */
+    boolean validateCredentials(String username, String password);
+
+    // Method to generate a token for a validated user
+    String generateLoginToken(String username);
 }

@@ -1,6 +1,7 @@
 package com.railway.managementsystem.position.model;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.railway.managementsystem.department.model.Department;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -22,7 +23,7 @@ public class Position {
     /**
      * 职位所属的部门 (租户)
      */
-    @TableField(exist = false)
+    @TableField(typeHandler = JacksonTypeHandler.class)
     private Department department;
 
     @TableField("department_id")
