@@ -5,12 +5,16 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.railway.managementsystem.department.model.Department;
 import com.railway.managementsystem.department.service.DepartmentService;
+import com.railway.managementsystem.user.dto.UserImportResultDto;
 import com.railway.managementsystem.user.dto.UserSimpleDto;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -60,6 +64,33 @@ public class DepartmentController {
         IPage<UserSimpleDto> page = new Page<>(current, size);
         IPage<UserSimpleDto> users = departmentService.listUsersByDepartment(departmentId, page);
         return ResponseEntity.ok(users);
+    }
+
+    /**
+     * 批量导入部门
+     * @param file Excel文件
+     * @return 导入结果，包含成功和失败的数量及信息
+     */
+    @PostMapping("/import-batch")
+    public ResponseEntity<UserImportResultDto> importDepartments(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        try {
+            UserImportResultDto result = departmentService.importDepartments(file.getInputStream());
+            return ResponseEntity.ok(result);
+        } catch (IOException e) {
+            // 在实际项目中，应使用全局异常处理器来处理此类异常
+            throw new RuntimeException("处理部门导入Excel文件失败", e);
+        }
+    }
+
+    /**
+     * 下载部门导入模板
+     */
+    @GetMapping("/template")
+    public void downloadTemplate(HttpServletResponse response) throws IOException {
+        departmentService.downloadTemplate(response);
     }
 
     // TODO:  Add more endpoints for creating, updating, and deleting departments

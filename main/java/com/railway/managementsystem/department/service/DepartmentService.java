@@ -3,8 +3,12 @@ package com.railway.managementsystem.department.service;
 import cn.hutool.core.lang.tree.Tree;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.railway.managementsystem.department.model.Department;
+import com.railway.managementsystem.user.dto.UserImportResultDto;
 import com.railway.managementsystem.user.dto.UserSimpleDto;
+import jakarta.servlet.http.HttpServletResponse;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 public interface DepartmentService {
@@ -13,4 +17,8 @@ public interface DepartmentService {
     IPage<Department> listDepartments(IPage<Department> page);
 
     IPage<UserSimpleDto> listUsersByDepartment(Long departmentId, IPage<UserSimpleDto> page);
+
+    UserImportResultDto importDepartments(InputStream inputStream);
+
+    void downloadTemplate(HttpServletResponse response) throws IOException;
 }

@@ -1,23 +1,15 @@
 package com.railway.managementsystem.user.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import cn.hutool.core.util.PageUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.railway.managementsystem.user.dto.*;
 import com.railway.managementsystem.user.exception.UserAlreadyExistsException;
-import com.railway.managementsystem.user.model.LoginError;
 import com.railway.managementsystem.user.model.User;
 import com.railway.managementsystem.user.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -29,8 +21,6 @@ import java.util.List;
 @RequestMapping("/api/users")
 public class UserController {
     private final UserService userService;
-    @Autowired
-    private AuthenticationManager authenticationManager;
 
     @Autowired
     public UserController(UserService userService) {
@@ -59,7 +49,6 @@ public class UserController {
 
 
 
-    @PostMapping("/register")
     /**
      * 用户注册接口
      * @param registrationDto 注册信息数据传输对象
@@ -68,6 +57,7 @@ public class UserController {
      *                        - fullName: 姓名 (String)
      *                        - employeeId: 员工号 (String)
      */
+    @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody UserRegistrationDto registrationDto) {
         try {
             User newUser = userService.registerUser(registrationDto);
@@ -77,13 +67,13 @@ public class UserController {
         }
     }
 
-   @PutMapping("/{userId}/position")
     /**
      * 更新用户职位接口
      * @param userId 用户ID (Long)
      * @param newPositionId 新职位ID (Long)
      * @return 更新后的用户信息 (User)
      */
+    @PutMapping("/{userId}/position")
     public ResponseEntity<User> updateUserPosition(@PathVariable Long userId, @RequestBody Long newPositionId) {
         User updatedUser = userService.updateUserPosition(userId, newPositionId);
         if (updatedUser != null) {
@@ -94,12 +84,12 @@ public class UserController {
     }
 
 
-    @GetMapping("/employeesByLevel")
     /**
      * 拉取管理所属职工列表
      * @param jobLevel 新职位ID (Long)
      * @return 更新后的用户信息 (User)
      */
+    @GetMapping("/employeesByLevel")
     public ResponseEntity<List<User>> getEmployees(@RequestParam Integer jobLevel) {
         List<User> employees = userService.getEmployeesByLevel(jobLevel);
         if (employees != null) {
@@ -122,8 +112,8 @@ public class UserController {
 
     /**
      * excel批量导入
-     * @param file
-     * @return
+     * @param file 上传文件流
+     * @return 返回更新结果
      */
     @PostMapping("/import-batch")
     public ResponseEntity<UserImportResultDto> importUsers(@RequestParam("file") MultipartFile file) {

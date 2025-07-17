@@ -23,7 +23,7 @@ public class Position {
     /**
      * 职位所属的部门 (租户)
      */
-    @TableField(typeHandler = JacksonTypeHandler.class)
+    @TableField(exist = false)
     private Department department;
 
     @TableField("department_id")
