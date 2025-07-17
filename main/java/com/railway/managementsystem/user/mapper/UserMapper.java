@@ -7,6 +7,7 @@ import com.railway.managementsystem.user.model.User;
 import com.railway.managementsystem.user.dto.UserSimpleDto;
 import org.apache.ibatis.annotations.Mapper;
 
+@Mapper
 public interface UserMapper extends BaseMapper<User> {
 
     /**

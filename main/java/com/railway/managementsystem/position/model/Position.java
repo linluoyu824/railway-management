@@ -1,7 +1,6 @@
 package com.railway.managementsystem.position.model;
 
 import com.baomidou.mybatisplus.annotation.*;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.railway.managementsystem.department.model.Department;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

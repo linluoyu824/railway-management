@@ -14,9 +14,9 @@ import com.railway.managementsystem.user.dto.UserImportResultDto;
 import com.railway.managementsystem.user.dto.UserSimpleDto;
 import com.railway.managementsystem.user.mapper.UserMapper;
 import com.railway.managementsystem.utils.DepartmentImportListener;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +31,9 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class DepartmentServiceImpl implements DepartmentService {
 
+    @Autowired
     private final DepartmentMapper departmentMapper;
+    @Autowired
     private final UserMapper userMapper;
 
     @Override
@@ -59,7 +61,7 @@ public class DepartmentServiceImpl implements DepartmentService {
     @Override
     public IPage<UserSimpleDto> listUsersByDepartment(Long departmentId, IPage<UserSimpleDto> page) {
         if (departmentMapper.selectById(departmentId) == null) {
-            throw new EntityNotFoundException("Department not found with id: " + departmentId);
+            throw new UnsupportedOperationException("Department not found with id: " + departmentId);
         }
         // This assumes you have a custom method in UserMapper to do this.
         // Let's define it in UserMapper.xml for clarity.
