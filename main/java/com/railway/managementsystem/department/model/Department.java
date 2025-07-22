@@ -1,20 +1,14 @@
 package com.railway.managementsystem.department.model;
 
 import com.baomidou.mybatisplus.annotation.*;
-import com.railway.managementsystem.user.model.User;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.time.LocalDateTime;
+import java.util.List;
 
-@Getter
-@Setter
-// 在ToString中排除关联对象，防止因循环引用导致的StackOverflowError
-@ToString(exclude = {"parent", "children", "users"})
-@EqualsAndHashCode(of = "id") // 实体类仅通过ID判断相等性
+@Data
+@NoArgsConstructor
 @TableName("departments")
 public class Department {
 
@@ -25,30 +19,34 @@ public class Department {
 
     private Integer level;
 
-    /**
-     * 所属上级部门
-     */
-    @TableField(exist = false)
-    private Department parent;
-
     @TableField("parent_id")
     private Long parentId;
 
-    /**
-     * 下级部门列表
-     */
     @TableField(exist = false)
-    private Set<Department> children = new HashSet<>();
+    private Department parent;
+
+    @TableField(exist = false)
+    private List<Department> children;
+
+    @TableField(value = "created_at", fill = FieldFill.INSERT)
+    private LocalDateTime createdAt;
+
+    @TableField(value = "created_by", fill = FieldFill.INSERT)
+    private String createdBy;
+
+    @TableField(value = "updated_at", fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updatedAt;
+
+    @TableField(value = "updated_by", fill = FieldFill.INSERT_UPDATE)
+    private String updatedBy;
 
     /**
-     * 该部门下的所有用户
+     * 用于导入逻辑的构造函数
+     * @param name 部门名称
+     * @param level 部门层级
+     * @param parent 父部门
      */
-    @TableField(exist = false)
-    private Set<User> users = new HashSet<>();
-
-    // 可以在此添加审计字段（createdAt, createdBy等）以保持项目一致性
-    // ...
-    public Department(String name, Integer level, Department parent) {
+    public Department(String name, int level, Department parent) {
         this.name = name;
         this.level = level;
         this.parent = parent;
@@ -56,5 +54,4 @@ public class Department {
             this.parentId = parent.getId();
         }
     }
-
 }

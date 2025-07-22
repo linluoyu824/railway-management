@@ -38,10 +38,11 @@ public class DepartmentImportListener implements ReadListener<DepartmentImportDt
             Department level3 = findOrCreateDepartment(data.getLevelThreeDepartment(), level2);
             findOrCreateDepartment(data.getLevelFourDepartment(), level3); // 最后一级
 
-            result.addSuccess();
+            result.setSuccessCount(result.getSuccessCount() + 1);
         } catch (Exception e) {
             log.error("处理部门导入第 {} 行数据失败: {}", rowIndex, data, e);
-            result.addFailure(rowIndex, e.getMessage());
+            result.setFailureCount(result.getFailureCount() + 1);
+            result.addFailureDetail("第 " + rowIndex + " 行处理失败: " + e.getMessage());
         }
     }
 

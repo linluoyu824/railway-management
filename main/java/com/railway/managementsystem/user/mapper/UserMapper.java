@@ -2,24 +2,22 @@ package com.railway.managementsystem.user.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.railway.managementsystem.user.dto.UserDto;
 import com.railway.managementsystem.user.model.User;
-import com.railway.managementsystem.user.dto.UserSimpleDto;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 @Mapper
 public interface UserMapper extends BaseMapper<User> {
 
     /**
-     * Custom query for paginated user retrieval.
-     * You can customize the SQL as needed, including joins, filtering, etc.
-     *
-     * @param page MyBatis-Plus pagination object
-     * @return Paginated result of UserDto
+     * 根据用户名查询用户，包含密码
      */
-    IPage<UserDto> selectUserPage(IPage<?> page);  // Use a wildcard IPage for input
+    User selectByUsername(@Param("username") String username);
 
-    IPage<UserSimpleDto> selectUsersByDepartmentPage(IPage<UserSimpleDto> page, Long departmentId);
-
-    User selectByUsername(String username);
+    /**
+     * 分页查询用户 DTO
+     */
+    IPage<UserDto> selectUserPage(Page<UserDto> page);
 }

@@ -1,7 +1,7 @@
 package com.railway.managementsystem.utils;
 
 import com.alibaba.excel.context.AnalysisContext;
-import com.alibaba.excel.read.listener.ReadListener;
+import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.railway.managementsystem.department.mapper.DepartmentMapper;
 import com.railway.managementsystem.department.model.Department;
@@ -10,25 +10,18 @@ import com.railway.managementsystem.position.model.Position;
 import com.railway.managementsystem.user.dto.UserImportDto;
 import com.railway.managementsystem.user.dto.UserImportResultDto;
 import com.railway.managementsystem.user.mapper.UserMapper;
-import com.railway.managementsystem.user.model.DriverLicenseType;
 import com.railway.managementsystem.user.model.User;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * EasyExcel监听器，用于逐行处理用户导入数据。
- * 此版本已适配MyBatis-Plus。
- */
-@RequiredArgsConstructor
 @Slf4j
-public class UserImportListener implements ReadListener<UserImportDto> {
+public class UserImportListener extends AnalysisEventListener<UserImportDto> {
 
     private final UserMapper userMapper;
     private final DepartmentMapper departmentMapper;
@@ -36,125 +29,130 @@ public class UserImportListener implements ReadListener<UserImportDto> {
     private final PasswordEncoder passwordEncoder;
     private final UserImportResultDto result;
 
-    // 使用缓存避免在同一次导入中重复查询相同的部门和职位
-    private final Map<String, Department> departmentCache = new ConcurrentHashMap<>();
-    private final Map<String, Position> positionCache = new ConcurrentHashMap<>();
+    // Caches to avoid repeated DB queries during a single import
+    private final Map<String, Department> departmentCache = new HashMap<>();
+    private final Map<String, Position> positionCache = new HashMap<>();
 
-    private static final int BATCH_SIZE = 100;
-    private final List<User> cachedDataList = new ArrayList<>(BATCH_SIZE);
+    public UserImportListener(UserMapper userMapper, DepartmentMapper departmentMapper, PositionMapper positionMapper, PasswordEncoder passwordEncoder, UserImportResultDto result) {
+        this.userMapper = userMapper;
+        this.departmentMapper = departmentMapper;
+        this.positionMapper = positionMapper;
+        this.passwordEncoder = passwordEncoder;
+        this.result = result;
+    }
 
     @Override
     public void invoke(UserImportDto data, AnalysisContext context) {
-        int rowIndex = context.readRowHolder().getRowIndex() + 1;
+        String employeeId = data.getEmployeeId();
+        if (!StringUtils.hasText(employeeId)) {
+            result.setFailureCount(result.getFailureCount() + 1);
+            result.addFailureDetail("第 " + (context.readRowHolder().getRowIndex() + 1) + " 行：工号为空，跳过。");
+            return;
+        }
+
+        // 1. Check if user already exists
+        if (userMapper.selectCount(new QueryWrapper<User>().eq("employee_id", employeeId)) > 0) {
+            result.setFailureCount(result.getFailureCount() + 1);
+            result.addFailureDetail("工号 " + employeeId + " 已存在，跳过。");
+            return;
+        }
+
         try {
-            if (!StringUtils.hasText(data.getEmployeeId())) {
-                throw new IllegalArgumentException("员工工号不能为空。");
+            // 2. Handle department hierarchy
+            Department finalDepartment = getOrCreateDepartmentHierarchy(data);
+            if (finalDepartment == null) {
+                result.setFailureCount(result.getFailureCount() + 1);
+                result.addFailureDetail("工号 " + employeeId + "：未能确定部门信息，跳过。");
+                return;
             }
 
-            // 检查员工工号是否已存在
-            if (userMapper.selectCount(new QueryWrapper<User>().eq("employee_id", data.getEmployeeId())) > 0) {
-                throw new IllegalArgumentException(String.format("员工工号 '%s' 已存在。", data.getEmployeeId()));
-            }
+            // 3. Handle position
+            Position position = getOrCreatePosition(data.getJobTitle(), finalDepartment.getId());
 
-            // 1. 动态处理部门层级
-            Department section = findOrCreateDepartment(data.getSection(), null);
-            Department workshop = findOrCreateDepartment(data.getWorkshop(), section);
-            Department team = findOrCreateDepartment(data.getTeam(), workshop);
-            Department finalDepartment = findOrCreateDepartment(data.getGuidanceGroup(), team);
-
-            // 2. 动态处理职位 (职位属于最终的部门)
-            Position position = findOrCreatePosition(data.getJobTitle(), finalDepartment);
-
-            // 3. 创建用户实体
+            // 4. Create new User entity
             User user = new User();
-            user.setEmployeeId(data.getEmployeeId());
+            user.setEmployeeId(employeeId);
             user.setFullName(data.getFullName());
             user.setMobilePhone(data.getMobilePhone());
-            user.setPinyinCode(data.getPinyinCode());
+            user.setDepartmentId(finalDepartment.getId());
+            user.setPositionId(position != null ? position.getId() : null);
 
-            // 默认使用工号作为用户名
-            user.setUsername(data.getEmployeeId());
-            // 设置默认密码，应提示用户首次登录后修改
-            if (passwordEncoder != null) {
-                user.setPassword(passwordEncoder.encode("Default123456"));
-            }
+            // Generate default username and password
+            user.setUsername(employeeId); // Use employeeId as username
+            user.setPassword(passwordEncoder.encode("123456")); // Default password, should be configurable
+            user.generatePinyinCode(); // Generate pinyin from fullName
 
-            user.setDepartment(finalDepartment);
-            user.setPosition(position);
-            user.setJobLevel(1); // 设置默认职级
+            userMapper.insert(user);
 
-            if (StringUtils.hasText(data.getDriverLicenseType())) {
-                try {
-                    user.setDriverLicenseType(DriverLicenseType.valueOf(data.getDriverLicenseType().toUpperCase()));
-                } catch (IllegalArgumentException e) {
-                    log.warn("行 {}: 无效的驾驶证类型 '{}'，将被忽略。", rowIndex, data.getDriverLicenseType());
-                }
-            }
+            // ** FIX: Use the correct methods to record success **
+            result.setSuccessCount(result.getSuccessCount() + 1);
+            result.addSuccessDetail("成功导入用户：" + data.getFullName() + " (工号: " + employeeId + ")");
 
-            cachedDataList.add(user);
-            if (cachedDataList.size() >= BATCH_SIZE) {
-                saveData();
-            }
-            result.addSuccess();
         } catch (Exception e) {
-            log.error("处理第 {} 行数据失败: {}", rowIndex, data, e);
-            result.addFailure(rowIndex, e.getMessage());
+            log.error("导入用户失败，工号: {}", employeeId, e);
+            result.setFailureCount(result.getFailureCount() + 1);
+            result.addFailureDetail("工号 " + employeeId + " 导入失败: " + e.getMessage());
         }
+    }
+
+    private Department getOrCreateDepartmentHierarchy(UserImportDto data) {
+        List<String> departmentNames = Arrays.asList(
+                data.getSection(),
+                data.getWorkshop(),
+                data.getTeam(),
+                data.getGuidanceGroup()
+        );
+
+        Long parentId = null;
+        Department currentDepartment = null;
+        int level = 1;
+
+        for (String deptName : departmentNames) {
+            if (!StringUtils.hasText(deptName)) {
+                break;
+            }
+
+            String cacheKey = (parentId == null ? "null" : parentId) + ":" + deptName;
+            currentDepartment = departmentCache.get(cacheKey);
+
+            if (currentDepartment == null) {
+                QueryWrapper<Department> queryWrapper = new QueryWrapper<Department>().eq("name", deptName);
+                queryWrapper.eq(parentId != null, "parent_id", parentId);
+                queryWrapper.isNull(parentId == null, "parent_id");
+                currentDepartment = departmentMapper.selectOne(queryWrapper);
+
+                if (currentDepartment == null) {
+                    currentDepartment = new Department(deptName, level, null);
+                    currentDepartment.setParentId(parentId);
+                    departmentMapper.insert(currentDepartment);
+                }
+                departmentCache.put(cacheKey, currentDepartment);
+            }
+            parentId = currentDepartment.getId();
+            level++;
+        }
+        return currentDepartment;
+    }
+
+    private Position getOrCreatePosition(String positionName, Long departmentId) {
+        if (!StringUtils.hasText(positionName)) return null;
+        String cacheKey = departmentId + ":" + positionName;
+        Position position = positionCache.get(cacheKey);
+        if (position == null) {
+            position = positionMapper.selectOne(new QueryWrapper<Position>().eq("name", positionName).eq("department_id", departmentId));
+            if (position == null) {
+                position = new Position();
+                position.setName(positionName);
+                position.setDepartmentId(departmentId);
+                positionMapper.insert(position);
+            }
+            positionCache.put(cacheKey, position);
+        }
+        return position;
     }
 
     @Override
     public void doAfterAllAnalysed(AnalysisContext context) {
-        // 保存最后一批数据
-        if (!cachedDataList.isEmpty()) {
-            saveData();
-        }
-        log.info("Excel导入完成。成功: {}, 失败: {}", result.getSuccessCount(), result.getFailureCount());
-    }
-
-    private void saveData() {
-        // 遍历并插入，在外层Service中应开启事务以保证原子性
-        for (User user : cachedDataList) {
-            userMapper.insert(user);
-        }
-        cachedDataList.clear();
-    }
-
-    private Department findOrCreateDepartment(String name, Department parent) {
-        if (!StringUtils.hasText(name)) return parent;
-        String cacheKey = (parent == null ? "null" : parent.getId()) + "_" + name;
-
-        return departmentCache.computeIfAbsent(cacheKey, k -> {
-            QueryWrapper<Department> queryWrapper = new QueryWrapper<>();
-            queryWrapper.eq("name", name);
-            if (parent == null) {
-                queryWrapper.isNull("parent_id");
-            } else {
-                queryWrapper.eq("parent_id", parent.getId());
-            }
-            
-            Department existingDept = departmentMapper.selectOne(queryWrapper);
-            if (existingDept != null) {
-                return existingDept;
-            } else {
-                Department newDept = new Department(name, parent == null ? 1 : parent.getLevel() + 1, parent);
-                departmentMapper.insert(newDept);
-                return newDept;
-            }
-        });
-    }
-
-    private Position findOrCreatePosition(String name, Department department) {
-        if (!StringUtils.hasText(name) || department == null) return null;
-        String cacheKey = department.getId() + "_" + name;
-        return positionCache.computeIfAbsent(cacheKey, k ->
-                positionMapper.selectOne(new QueryWrapper<Position>().eq("name", name).eq("department_id", department.getId()))
-                        .orElseGet(() -> {
-                            Position newPos = new Position();
-                            newPos.setName(name);
-                            newPos.setDepartment(department);
-                            positionMapper.insert(newPos);
-                            return newPos;
-                        })
-        );
+        log.info("所有数据解析完成！成功: {}, 失败: {}", result.getSuccessCount(), result.getFailureCount());
     }
 }

@@ -3,6 +3,8 @@ package com.railway.managementsystem.department.controller;
 import cn.hutool.core.lang.tree.Tree;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+
+import com.railway.managementsystem.department.dto.DepartmentCreateDto;
 import com.railway.managementsystem.department.model.Department;
 import com.railway.managementsystem.department.service.DepartmentService;
 import com.railway.managementsystem.user.dto.UserImportResultDto;
@@ -13,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import jakarta.validation.Valid;
 
 import java.io.IOException;
 import java.util.List;
@@ -95,12 +98,12 @@ public class DepartmentController {
 
     // TODO:  Add more endpoints for creating, updating, and deleting departments
     // Example for creating a department (requires a DepartmentCreateDto):
-    /*
+
     @PostMapping
-    public ResponseEntity<Department> createDepartment(@RequestBody @Valid DepartmentCreateDto createDto) {
+    public ResponseEntity<Department> createDepartment(@Valid @RequestBody DepartmentCreateDto createDto) {
         Department newDepartment = departmentService.createDepartment(createDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(newDepartment);
     }
-    */
+
 
 }

@@ -3,7 +3,12 @@ server:
 spring:
   profiles:
     active: dev
-
+  data:
+    redis:
+      host: your_redis_host
+      port: your_redis_port
+      password: your_redis_password
+      database: 0  # The default database is 0, change if needed
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true  # Enable camelCase mapping
@@ -11,10 +16,3 @@ mybatis-plus:
   pattern:
     dateformat: yyyy-MM-dd HH:mm:ss.SSS
 
-spring:
-  data:
-    redis:
-      host: your_redis_host
-      port: your_redis_port
-      password: your_redis_password
-      database: 0  # The default database is 0, change if needed

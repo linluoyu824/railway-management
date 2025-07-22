@@ -1,14 +1,12 @@
 package com.railway.managementsystem.permission.model;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
 
-@Getter
-@Setter
+import java.time.LocalDateTime;
+
+@Data
 @EqualsAndHashCode(of = "id")
 @TableName("permissions")
 public class Permission {
@@ -16,9 +14,30 @@ public class Permission {
     @TableId(type = IdType.AUTO)
     private Long id;
 
-    private String name; // 权限名称, e.g., "创建用户"
+    /**
+     * 权限名称, e.g., "创建用户"
+     */
+    private String name;
 
-    private String code; // 权限代码, e.g., "user:create", 用于程序判断
+    /**
+     * 权限代码, e.g., "user:create"
+     */
+    private String code;
 
+    /**
+     * 权限描述
+     */
     private String description;
+
+    @TableField(value = "created_at", fill = FieldFill.INSERT)
+    private LocalDateTime createdAt;
+
+    @TableField(value = "created_by", fill = FieldFill.INSERT)
+    private String createdBy;
+
+    @TableField(value = "updated_at", fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updatedAt;
+
+    @TableField(value = "updated_by", fill = FieldFill.INSERT_UPDATE)
+    private String updatedBy;
 }

@@ -9,14 +9,15 @@ import java.util.List;
 public class UserImportResultDto {
     private int successCount = 0;
     private int failureCount = 0;
-    private List<String> errorMessages = new ArrayList<>();
+    private List<String> failureDetails = new ArrayList<>();
+    private List<String> successDetails = new ArrayList<>();
 
-    public void addSuccess() {
-        this.successCount++;
+    public void addFailureDetail(String detail) {
+        this.failureDetails.add(detail);
     }
 
-    public void addFailure(int rowNum, String message) {
-        this.failureCount++;
-        this.errorMessages.add(String.format("Row %d: %s", rowNum, message));
+    public void addSuccessDetail(String detail) {
+        this.successDetails.add(detail);
     }
+
 }

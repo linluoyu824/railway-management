@@ -2,13 +2,11 @@ package com.railway.managementsystem.position.model;
 
 import com.baomidou.mybatisplus.annotation.*;
 import com.railway.managementsystem.department.model.Department;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
-@Getter
-@Setter
-@EqualsAndHashCode(of = "id")
+import java.time.LocalDateTime;
+
+@Data
 @TableName("positions")
 public class Position {
 
@@ -17,14 +15,21 @@ public class Position {
 
     private String name;
 
-    private String description;
+    @TableField("department_id")
+    private Long departmentId;
 
-    /**
-     * 职位所属的部门 (租户)
-     */
     @TableField(exist = false)
     private Department department;
 
-    @TableField("department_id")
-    private Long departmentId;
+    @TableField(value = "created_at", fill = FieldFill.INSERT)
+    private LocalDateTime createdAt;
+
+    @TableField(value = "created_by", fill = FieldFill.INSERT)
+    private String createdBy;
+
+    @TableField(value = "updated_at", fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updatedAt;
+
+    @TableField(value = "updated_by", fill = FieldFill.INSERT_UPDATE)
+    private String updatedBy;
 }

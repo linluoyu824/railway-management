@@ -6,5 +6,4 @@ import org.apache.ibatis.annotations.Mapper;
 
 @Mapper
 public interface DepartmentMapper extends BaseMapper<Department> {
-    // 复杂的查询可以写在这里，或者在XML中
 }
