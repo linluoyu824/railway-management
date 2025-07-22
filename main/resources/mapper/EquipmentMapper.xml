@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.railway.managementsystem.equipment.mapper.EquipmentMapper">
+
+    <!-- 定义结果集映射，将查询结果与DTO字段对应 -->
+    <resultMap id="EquipmentDetailResultMap" type="com.railway.managementsystem.equipment.dto.EquipmentDetailDto">
+        <id property="id" column="e_id"/>
+        <result property="name" column="e_name"/>
+        <result property="type" column="e_type"/>
+        <result property="serialNumber" column="e_serial_number"/>
+        <result property="purchaseDate" column="e_purchase_date"/>
+        <result property="status" column="e_status"/>
+        <result property="guideDocumentPath" column="e_guide_document_path"/>
+        <result property="departmentId" column="e_department_id"/>
+        <result property="adminUserId" column="e_admin_user_id"/>
+        <result property="parameters" column="e_parameters" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="createdAt" column="e_created_at"/>
+        <result property="createdBy" column="e_created_by"/>
+        <result property="updatedAt" column="e_updated_at"/>
+        <result property="updatedBy" column="e_updated_by"/>
+        <result property="adminUserName" column="u_full_name"/>
+        <result property="adminUserPhone" column="u_mobile_phone"/>
+    </resultMap>
+
+    <!-- 自定义SQL查询 -->
+    <select id="selectDetailById" resultMap="EquipmentDetailResultMap">
+        SELECT
+            e.id AS e_id, e.name AS e_name, e.type AS e_type, e.serial_number AS e_serial_number,
+            e.purchase_date AS e_purchase_date, e.status AS e_status, e.guide_document_path AS e_guide_document_path,
+            e.department_id AS e_department_id, e.admin_user_id AS e_admin_user_id, e.parameters AS e_parameters,
+            e.created_at AS e_created_at, e.created_by AS e_created_by, e.updated_at AS e_updated_at, e.updated_by AS e_updated_by,
+            u.full_name AS u_full_name,
+            u.mobile_phone AS u_mobile_phone
+        FROM
+            equipments e
+        LEFT JOIN
+            users u ON e.admin_user_id = u.id
+        WHERE
+            e.id = #{id}
+    </select>
+
+    <!-- 自定义SQL查询，根据管理员ID查询设备列表 -->
+    <select id="selectDetailsByAdminUserId" resultMap="EquipmentDetailResultMap">
+        SELECT
+            e.id AS e_id, e.name AS e_name, e.type AS e_type, e.serial_number AS e_serial_number,
+            e.purchase_date AS e_purchase_date, e.status AS e_status, e.guide_document_path AS e_guide_document_path,
+            e.department_id AS e_department_id, e.admin_user_id AS e_admin_user_id, e.parameters AS e_parameters,
+            e.created_at AS e_created_at, e.created_by AS e_created_by, e.updated_at AS e_updated_at, e.updated_by AS e_updated_by,
+            u.full_name AS u_full_name,
+            u.mobile_phone AS u_mobile_phone
+        FROM
+            equipments e
+        LEFT JOIN
+            users u ON e.admin_user_id = u.id
+        WHERE e.admin_user_id = #{adminUserId}
+        ORDER BY e.created_at DESC
+    </select>
+</mapper>
