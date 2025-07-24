@@ -1,0 +1,16 @@
+package com.railway.management.user.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserSimpleDto {
+    private Long id;
+    private String fullName;
+    private Long employeeId;
+    private String jobTitle;
+    private String mobilePhone;
+}

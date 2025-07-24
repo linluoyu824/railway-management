@@ -31,7 +31,7 @@
         <!-- 滚动策略 -->
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <!-- 日志文件名格式 -->
-            <fileNamePattern>${LOG_PATH}/railway-system-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <fileNamePattern>${LOG_PATH}/railway-management-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <!-- 单个日志文件最大大小 -->
             <maxFileSize>10MB</maxFileSize>
             <!-- 日志文件保留天数 -->
@@ -42,8 +42,8 @@
     </appender>
 
     <!-- 设置日志级别 -->
-    <!-- com.railway.managementsystem 包下的日志级别为 INFO -->
-    <logger name="com.railway.managementsystem" level="INFO"/>
+    <!-- com.railway.management 包下的日志级别为 INFO -->
+    <logger name="com.railway.management" level="INFO"/>
     <!-- Spring框架的日志级别为 WARN，减少不必要的框架日志 -->
     <logger name="org.springframework" level="WARN"/>
 

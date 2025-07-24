@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.railway.managementsystem.equipment.mapper.EquipmentMapper">
+<mapper namespace="com.railway.management.equipment.mapper.EquipmentMapper">
 
     <!-- 定义结果集映射，将查询结果与DTO字段对应 -->
-    <resultMap id="EquipmentDetailResultMap" type="com.railway.managementsystem.equipment.dto.EquipmentDetailDto">
+    <resultMap id="EquipmentDetailResultMap" type="com.railway.management.equipment.dto.EquipmentDetailDto">
         <id property="id" column="e_id"/>
         <result property="name" column="e_name"/>
         <result property="type" column="e_type"/>

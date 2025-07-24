@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.railway.managementsystem.user.mapper.UserMapper">
+<mapper namespace="com.railway.management.user.mapper.UserMapper">
 
     <!-- Result Map to map the query results to UserDto -->
-    <resultMap id="UserDtoResultMap" type="com.railway.managementsystem.user.dto.UserDto">
+    <resultMap id="UserDtoResultMap" type="com.railway.management.user.dto.UserDto">
         <id column="id" property="id"/>
         <result column="username" property="username"/>
         <result column="full_name" property="fullName"/>
@@ -17,7 +17,7 @@
     </select>
 
     <!-- Result Map for UserSimpleDto -->
-    <resultMap id="UserSimpleDtoResultMap" type="com.railway.managementsystem.user.dto.UserSimpleDto">
+    <resultMap id="UserSimpleDtoResultMap" type="com.railway.management.user.dto.UserSimpleDto">
         <id column="id" property="id"/>
         <result column="full_name" property="fullName"/>
         <result column="employee_id" property="employeeId"/>
@@ -29,7 +29,7 @@
         SELECT id, full_name, employee_id, job_title, mobile_phone FROM users WHERE department_id = #{departmentId}
     </select>
 
-    <select id="selectByUsername" resultType="com.railway.managementsystem.user.model.User">
+    <select id="selectByUsername" resultType="com.railway.management.user.model.User">
         SELECT * FROM users WHERE username = #{username}
     </select>
 </mapper>
