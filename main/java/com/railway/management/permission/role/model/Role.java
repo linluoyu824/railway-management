@@ -1,25 +1,40 @@
-package com.railway.management.position.model;
+package com.railway.management.permission.role.model;
 
 import com.baomidou.mybatisplus.annotation.*;
 import com.railway.management.department.model.Department;
-import lombok.Data;
+import com.railway.management.permission.model.Permission;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
-@Data
-@TableName("positions")
-public class Position {
+@Getter
+@Setter
+@EqualsAndHashCode(of = "id")
+@TableName("roles")
+public class Role {
 
     @TableId(type = IdType.AUTO)
     private Long id;
 
-    private String name;
+    private String name; // 角色名称, e.g., "系统管理员"
+
+    private String code; // 角色代码, e.g., "ROLE_ADMIN"
+
+    @TableField(exist = false)
+    private Set<Permission> permissions = new HashSet<>();
+
+    /**
+     * 角色所属的部门 (租户)
+     */
+    @TableField(exist = false)
+    private Department department;
 
     @TableField("department_id")
     private Long departmentId;
-
-    @TableField(exist = false)
-    private Department department;
 
     @TableField(value = "created_at", fill = FieldFill.INSERT)
     private LocalDateTime createdAt;

@@ -1,78 +1,60 @@
 package com.railway.management.permission.service.impl;
 
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.railway.management.permission.dto.PermissionCreateDto;
+import com.railway.management.permission.dto.PermissionUpdateDto;
+import com.railway.management.permission.mapper.PermissionMapper;
 import com.railway.management.permission.model.Permission;
 import com.railway.management.permission.service.PermissionService;
-import com.railway.management.role.model.Role;
-import com.railway.management.user.mapper.UserMapper;
-import com.railway.management.user.model.User;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.List;
 
 @Service
-@Transactional(readOnly = true)
-public class PermissionServiceImpl implements PermissionService {
+public class PermissionServiceImpl extends ServiceImpl<PermissionMapper, Permission> implements PermissionService {
 
-    private final UserMapper userMapper;
-
-    public PermissionServiceImpl(UserMapper userMapper) {
-        this.userMapper = userMapper;
+    @Override
+    public List<Permission> getAllPermissions() {
+        return list(new QueryWrapper<Permission>().orderByDesc("created_at"));
     }
 
-    /**
-     * 获取指定员工的功能权限列表（返回权限代码）。
-     * 在多租户架构下，权限是根据用户所属的角色集合计算得出的，
-     * 并且这些角色都必须属于用户所在的租户（部门）。
-     *
-     * 注意：此方法现在只依赖于用户已分配的角色，不再通过 jobLevel 进行硬编码映射，
-     * 从而实现了灵活的权限配置。
-     *
-     * @param employeeId 员工工号
-     * @return 一组权限代码，例如 ["user:create", "report:view"]
-     */
     @Override
-    public Set<String> getPermissionsForEmployee(String employeeId) {
-        // 1. 使用高效的查询获取用户、角色和权限信息
-        User user = userMapper.selectOne(Wrappers.query(User.class).eq("employeeId",employeeId));;
-
-        // 2. 直接从用户关联的角色中提取所有权限
-        return user.getRoles().stream()
-                .flatMap(role -> role.getPermissions().stream())
-                .map(Permission::getCode)
-                .collect(Collectors.toSet());
-    }
-
-    /**
-     * 获取当前登录用户（租户）可用于分配的所有角色列表。
-     * 这是实现灵活配置的关键，部门管理员只能看到并管理自己部门的角色。
-     * @return 当前租户下的角色列表
-     */
-    @Override
-    public Set<Role> getRolesForCurrentTenant() {
-        // 1. 获取当前登录用户的信息
-        // 实际项目中，用户信息通常在登录时存入 SecurityContext
-        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
-        User currentUser = userMapper.selectOne(Wrappers.query(User.class).eq("employeeId",currentUsername));
-
-        if (currentUser.getDepartment() == null) {
-            // 如果是超级管理员或无部门用户，可以定义不同逻辑，例如返回所有角色
-            // 这里为简化，假设所有用户都有部门
-            throw new IllegalStateException("Current user does not belong to any department.");
+    @Transactional
+    public Permission createPermission(PermissionCreateDto createDto) {
+        if (count(new QueryWrapper<Permission>().eq("code", createDto.getCode())) > 0) {
+            throw new IllegalStateException("权限代码 '" + createDto.getCode() + "' 已存在");
         }
-
-        // 2. 获取用户所属的部门ID (租户ID)
-        Long tenantId = currentUser.getDepartment().getId();
-
-        // 3. 从用户的所有角色中提取
-        // 在一个更复杂的系统中，这里会调用 roleRepository.findByDepartmentId(tenantId)
-        // 但为了演示，我们假设用户所拥有的角色必然属于其部门
-        return currentUser.getRoles().stream()
-                .filter(role -> role.getDepartment() != null && role.getDepartment().getId().equals(tenantId))
-                .collect(Collectors.toSet());
+        Permission permission = new Permission();
+        permission.setName(createDto.getName());
+        permission.setCode(createDto.getCode());
+        permission.setDescription(createDto.getDescription());
+        save(permission);
+        return permission;
     }
 
+    @Override
+    @Transactional
+    public Permission updatePermission(PermissionUpdateDto updateDto) {
+        Permission existing = getById(updateDto.getId());
+        if (existing == null) {
+            throw new IllegalArgumentException("权限ID " + updateDto.getId() + " 不存在");
+        }
+        // 此处省略了对code冲突的检查，可以根据业务需求添加
+        existing.setName(updateDto.getName());
+        existing.setCode(updateDto.getCode());
+        existing.setDescription(updateDto.getDescription());
+        updateById(existing);
+        return existing;
+    }
+
+    @Override
+    @Transactional
+    public void deletePermission(Long id) {
+        // TODO: 在实际项目中，应先检查此权限是否被任何角色使用
+        if (!removeById(id)) {
+            throw new IllegalArgumentException("权限ID " + id + " 不存在，无法删除");
+        }
+    }
 }

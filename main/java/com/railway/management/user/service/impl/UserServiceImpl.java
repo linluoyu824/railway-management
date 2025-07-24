@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.railway.management.department.mapper.DepartmentMapper;
-import com.railway.management.position.mapper.PositionMapper;
+import com.railway.management.permission.position.mapper.PositionMapper;
 import com.railway.management.user.dto.UserDto;
 import com.railway.management.user.dto.UserImportDto;
 import com.railway.management.user.dto.UserImportResultDto;

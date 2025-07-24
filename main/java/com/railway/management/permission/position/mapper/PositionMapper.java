@@ -1,7 +1,7 @@
-package com.railway.management.position.mapper;
+package com.railway.management.permission.position.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.railway.management.position.model.Position;
+import com.railway.management.permission.position.model.Position;
 import org.apache.ibatis.annotations.Mapper;
 
 @Mapper

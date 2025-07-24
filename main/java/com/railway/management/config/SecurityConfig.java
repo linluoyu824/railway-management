@@ -28,8 +28,12 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/users/login",
-                                "/api/users/register"
-                                // Add any other public endpoints here, e.g., for Swagger
+                                "/api/users/register",
+                                // -- Swagger UI v3 (OpenAPI)
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
+                                // -- End Swagger UI
                         ).permitAll()
                         .anyRequest().authenticated() // All other requests require authentication
                 )

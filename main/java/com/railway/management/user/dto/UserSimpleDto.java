@@ -13,4 +13,9 @@ public class UserSimpleDto {
     private Long employeeId;
     private String jobTitle;
     private String mobilePhone;
+
+    public UserSimpleDto(Long id, String fullName) {
+        this.id = id;
+        this.fullName = fullName;
+    }
 }

@@ -7,6 +7,9 @@ import com.railway.management.equipment.dto.EquipmentAssignDto;
 import com.railway.management.equipment.dto.EquipmentUpdateDto;
 import com.railway.management.equipment.model.Equipment;
 import com.railway.management.equipment.service.EquipmentService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +22,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/equipments")
+@Tag(name = "设备管理", description = "提供设备的增删改查、文档管理、批量操作等功能")
 @RequiredArgsConstructor
 public class EquipmentController {
 
@@ -28,9 +32,11 @@ public class EquipmentController {
      * 分页获取设备列表
      */
     @GetMapping
+    @Operation(summary = "分页查询设备列表")
     public ResponseEntity<IPage<Equipment>> listEquipment(
-            @RequestParam(defaultValue = "1") long current,
-            @RequestParam(defaultValue = "10") long size) {
+            @Parameter(description = "当前页码", example = "1") @RequestParam(defaultValue = "1") long current,
+            @Parameter(description = "每页显示数量", example = "10") @RequestParam(defaultValue = "10") long size
+    ) {
         IPage<Equipment> page = new Page<>(current, size);
         IPage<Equipment> equipmentPage = equipmentService.listEquipment(page);
         return ResponseEntity.ok(equipmentPage);
@@ -42,9 +48,10 @@ public class EquipmentController {
      * @param file 上传的文件
      */
     @PostMapping("/{equipmentId}/guide")
+    @Operation(summary = "上传设备指导文档", description = "为指定的设备上传一个指导文档文件")
     public ResponseEntity<String> uploadGuideDocument(
-            @PathVariable Long equipmentId,
-            @RequestParam("file") MultipartFile file) {
+            @Parameter(description = "设备ID", required = true) @PathVariable Long equipmentId,
+            @Parameter(description = "指导文档文件", required = true) @RequestParam("file") MultipartFile file) {
         try {
             equipmentService.uploadGuideDocument(equipmentId, file.getOriginalFilename(), file.getInputStream());
             return ResponseEntity.ok("指导文档上传成功。");
@@ -61,6 +68,7 @@ public class EquipmentController {
      * @return 更新后的设备信息
      */
     @PutMapping
+    @Operation(summary = "更新设备信息")
     public ResponseEntity<?> updateEquipment(@Valid @RequestBody EquipmentUpdateDto updateDto) {
         try {
             Equipment updatedEquipment = equipmentService.updateEquipment(updateDto);
@@ -79,7 +87,10 @@ public class EquipmentController {
      * @return 导入结果
      */
     @PostMapping("/import-batch")
-    public ResponseEntity<String> importEquipments(@RequestParam("file") MultipartFile file) {
+    @Operation(summary = "批量导入设备", description = "通过上传Excel文件批量创建设备")
+    public ResponseEntity<String> importEquipments(
+            @Parameter(description = "包含设备信息的Excel文件", required = true) @RequestParam("file") MultipartFile file
+    ) {
         if (file.isEmpty()) {
             return ResponseEntity.badRequest().body("请选择要上传的文件。");
         }
@@ -97,6 +108,7 @@ public class EquipmentController {
      * @return 操作结果
      */
     @PostMapping("/assign-batch")
+    @Operation(summary = "批量分配设备", description = "将一批设备批量分配给一个指定的用户")
     public ResponseEntity<String> assignEquipments(@Valid @RequestBody EquipmentAssignDto assignDto) {
         try {
             int assignedCount = equipmentService.assignEquipmentsToUser(assignDto.getEquipmentIds(), assignDto.getAdminUserId());
@@ -114,7 +126,10 @@ public class EquipmentController {
      * @param response HttpServletResponse
      */
     @GetMapping("/{equipmentId}/guide/download")
-    public void downloadGuideDocument(@PathVariable Long equipmentId, HttpServletResponse response) {
+    @Operation(summary = "下载设备指导文档")
+    public void downloadGuideDocument(
+            @Parameter(description = "设备ID", required = true) @PathVariable Long equipmentId,
+            HttpServletResponse response) {
         try {
             equipmentService.downloadGuideDocument(equipmentId, response);
         } catch (Exception e) {
@@ -129,7 +144,10 @@ public class EquipmentController {
      * @return 设备详情
      */
     @GetMapping("/{id}/details")
-    public ResponseEntity<?> getEquipmentDetail(@PathVariable Long id) {
+    @Operation(summary = "获取设备详情", description = "获取单个设备的详细信息，包含其管理人员的姓名和电话")
+    public ResponseEntity<?> getEquipmentDetail(
+            @Parameter(description = "设备ID", required = true) @PathVariable Long id
+    ) {
         EquipmentDetailDto detailDto = equipmentService.getEquipmentDetail(id);
         if (detailDto == null) {
             // 如果找不到设备，返回 404 Not Found
@@ -144,7 +162,10 @@ public class EquipmentController {
      * @return 设备详情列表
      */
     @GetMapping("/by-admin/{adminUserId}")
-    public ResponseEntity<List<EquipmentDetailDto>> getEquipmentsByAdminUser(@PathVariable Long adminUserId) {
+    @Operation(summary = "查询用户管理的设备", description = "根据管理人员ID获取其名下的所有设备列表")
+    public ResponseEntity<List<EquipmentDetailDto>> getEquipmentsByAdminUser(
+            @Parameter(description = "管理人员的用户ID", required = true) @PathVariable Long adminUserId
+    ) {
         List<EquipmentDetailDto> equipmentList = equipmentService.getEquipmentsByAdminUser(adminUserId);
         return ResponseEntity.ok(equipmentList);
     }

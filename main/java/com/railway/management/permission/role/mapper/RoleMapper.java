@@ -1,7 +1,7 @@
-package com.railway.management.role.mapper;
+package com.railway.management.permission.role.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.railway.management.role.model.Role;
+import com.railway.management.permission.role.model.Role;
 import org.apache.ibatis.annotations.Mapper;
 
 @Mapper
