@@ -25,12 +25,7 @@
     <!-- 自定义SQL查询 -->
     <select id="selectDetailById" resultMap="EquipmentDetailResultMap">
         SELECT
-            e.id AS e_id, e.name AS e_name, e.type AS e_type, e.serial_number AS e_serial_number,
-            e.purchase_date AS e_purchase_date, e.status AS e_status, e.guide_document_path AS e_guide_document_path,
-            e.department_id AS e_department_id, e.admin_user_id AS e_admin_user_id, e.parameters AS e_parameters,
-            e.created_at AS e_created_at, e.created_by AS e_created_by, e.updated_at AS e_updated_at, e.updated_by AS e_updated_by,
-            u.full_name AS u_full_name,
-            u.mobile_phone AS u_mobile_phone
+            e.*,u.full_name as u_full_name, u.mobile_phone as u_mobile_phone
         FROM
             equipments e
         LEFT JOIN
@@ -42,17 +37,13 @@
     <!-- 自定义SQL查询，根据管理员ID查询设备列表 -->
     <select id="selectDetailsByAdminUserId" resultMap="EquipmentDetailResultMap">
         SELECT
-            e.id AS e_id, e.name AS e_name, e.type AS e_type, e.serial_number AS e_serial_number,
-            e.purchase_date AS e_purchase_date, e.status AS e_status, e.guide_document_path AS e_guide_document_path,
-            e.department_id AS e_department_id, e.admin_user_id AS e_admin_user_id, e.parameters AS e_parameters,
-            e.created_at AS e_created_at, e.created_by AS e_created_by, e.updated_at AS e_updated_at, e.updated_by AS e_updated_by,
-            u.full_name AS u_full_name,
-            u.mobile_phone AS u_mobile_phone
+            e.*,u.full_name AS u_full_name,u.mobile_phone AS u_mobile_phone
         FROM
             equipments e
         LEFT JOIN
             users u ON e.admin_user_id = u.id
         WHERE e.admin_user_id = #{adminUserId}
+          AND e.department_path LIKE CONCAT(#{departmentPath}, '%')
         ORDER BY e.created_at DESC
     </select>
 </mapper>

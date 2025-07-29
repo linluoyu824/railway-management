@@ -30,6 +30,6 @@
     </select>
 
     <select id="selectByUsername" resultType="com.railway.management.user.model.User">
-        SELECT * FROM users WHERE username = #{username}
+        SELECT * FROM users WHERE mobile_phone = #{username}
     </select>
 </mapper>

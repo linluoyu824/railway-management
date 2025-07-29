@@ -78,6 +78,34 @@ public class DepartmentServiceImpl implements DepartmentService {
     }
 
     @Override
+    public String buildDepartmentPath(Long departmentId) {
+        StringBuilder path = new StringBuilder();
+        Department current = departmentMapper.selectById(departmentId);
+
+        if (current == null) {
+            return null; // Or throw an exception
+        }
+
+        List<Long> ids = new ArrayList<>();
+        while (current != null) {
+            ids.add(current.getId());
+            current = (current.getParentId() != null) ? departmentMapper.selectById(current.getParentId()) : null;
+        }
+
+        // Reverse the list to build the path from root to leaf
+        Collections.reverse(ids);
+
+        for (int i = 0; i < ids.size(); i++) {
+            path.append(ids.get(i));
+            if (i < ids.size() - 1) {
+                path.append(",");
+            }
+        }
+
+        return path.toString();
+    }
+
+    @Override
     public List<Tree<Long>> getDepartmentTree() {
         // 1. 获取所有部门列表，可以根据需要添加排序
         List<Department> departments = departmentMapper.selectList(null);

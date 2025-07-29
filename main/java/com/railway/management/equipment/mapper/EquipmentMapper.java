@@ -21,5 +21,5 @@ public interface EquipmentMapper extends BaseMapper<Equipment> {
      * @param adminUserId 管理员ID
      * @return 设备详情DTO列表
      */
-    List<EquipmentDetailDto> selectDetailsByAdminUserId(@Param("adminUserId") Long adminUserId);
+    List<EquipmentDetailDto> selectDetailsByAdminUserId(@Param("adminUserId") Long adminUserId,@Param("departmentPath") String departmentPath);
 }

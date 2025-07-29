@@ -16,6 +16,7 @@ public class Equipment {
     @TableId(type = IdType.AUTO)
     private Long id;
 
+    private String departmentPath;
     /** 设备名称 */
     private String name;
 

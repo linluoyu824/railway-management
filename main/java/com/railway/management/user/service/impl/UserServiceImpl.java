@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.railway.management.department.mapper.DepartmentMapper;
 import com.railway.management.permission.position.mapper.PositionMapper;
 import com.railway.management.user.dto.UserDto;
+import com.railway.management.department.model.Department;
 import com.railway.management.user.dto.UserImportDto;
 import com.railway.management.user.dto.UserImportResultDto;
 import com.railway.management.user.dto.UserRegistrationDto;
@@ -15,6 +16,7 @@ import com.railway.management.user.model.User;
 import com.railway.management.user.service.TokenCacheService;
 import com.railway.management.user.service.UserService;
 import com.railway.management.user.mapper.UserMapper;
+import com.railway.management.department.service.DepartmentService;
 import com.railway.management.utils.UserImportListener;
 import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -29,14 +31,16 @@ public class UserServiceImpl implements UserService{
     private final UserMapper userMapper;
     private final DepartmentMapper departmentMapper;
     private final PositionMapper positionMapper;
+    private final DepartmentService departmentService;
     private final TokenCacheService tokenCacheService; // Inject TokenCacheService
 
-    public UserServiceImpl(DelegatingPasswordEncoder passwordEncoder, UserMapper userMapper, DepartmentMapper departmentMapper, PositionMapper positionMapper, TokenCacheService tokenCacheService) {
+    public UserServiceImpl(DelegatingPasswordEncoder passwordEncoder, UserMapper userMapper, DepartmentMapper departmentMapper, PositionMapper positionMapper,DepartmentService departmentService, TokenCacheService tokenCacheService) {
         this.passwordEncoder = passwordEncoder;
         this.userMapper = userMapper;
         this.departmentMapper = departmentMapper;
         this.positionMapper = positionMapper;
         this.tokenCacheService = tokenCacheService;
+        this.departmentService = departmentService;
     }
 
     @Override
@@ -52,6 +56,10 @@ public class UserServiceImpl implements UserService{
         }
 
         User user = new User();
+
+        Department department = departmentMapper.selectById(user.getDepartmentId());
+        String departmentPath = departmentService.buildDepartmentPath(department.getId());
+        user.setDepartmentPath(departmentPath);
         user.setUsername(registrationDto.getUsername());
         // Check if passwordEncoder is null before using it
         if (passwordEncoder != null) {
@@ -69,6 +77,11 @@ public class UserServiceImpl implements UserService{
         User user = userMapper.selectById(userId);
         if (user != null) {
             //  TODO: 在这里添加职位变更记录到 PositionChange 表
+            Department department = departmentMapper.selectById(user.getDepartmentId());
+
+            String departmentPath = departmentService.buildDepartmentPath(department.getId());
+            user.setDepartmentPath(departmentPath);
+
             user.getPosition().setId(newPositionId);
             userMapper.updateById(user); // 注意：这里只会更新user表，position_id会更新。如果User实体中加载了Position对象，这个操作是正确的。
             return user;
@@ -132,4 +145,5 @@ public class UserServiceImpl implements UserService{
      public void invalidateToken(String token){
          tokenCacheService.invalidateToken(token);
      }
+
 }

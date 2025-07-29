@@ -163,10 +163,11 @@ public class EquipmentController {
      */
     @GetMapping("/by-admin/{adminUserId}")
     @Operation(summary = "查询用户管理的设备", description = "根据管理人员ID获取其名下的所有设备列表")
-    public ResponseEntity<List<EquipmentDetailDto>> getEquipmentsByAdminUser(
-            @Parameter(description = "管理人员的用户ID", required = true) @PathVariable Long adminUserId
+     public ResponseEntity<List<EquipmentDetailDto>> getEquipmentsByAdminUser(
+            @Parameter(description = "管理人员的用户ID", required = true) @PathVariable Long adminUserId,
+            @Parameter(description = "部门路径", required = true) @RequestParam String departmentPath
     ) {
-        List<EquipmentDetailDto> equipmentList = equipmentService.getEquipmentsByAdminUser(adminUserId);
+        List<EquipmentDetailDto> equipmentList = equipmentService.getEquipmentsByAdminUser(adminUserId,departmentPath);
         return ResponseEntity.ok(equipmentList);
     }
 }

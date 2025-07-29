@@ -6,6 +6,7 @@ import com.railway.management.department.model.Department;
 import com.railway.management.permission.role.model.Role;
 import com.railway.management.permission.position.model.Position;
 import cn.hutool.extra.pinyin.PinyinUtil;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,6 +25,9 @@ public class User {
 
     @TableId(type = IdType.AUTO) // 声明主键，并设置为自增
     private Long id;
+
+    @Schema(description = "部门路径，存储部门层级结构")
+    private String departmentPath;
 
     private String username;
 

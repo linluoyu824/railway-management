@@ -45,4 +45,11 @@ public interface DepartmentService {
      * @return 创建后的部门实体
      */
     Department createDepartment(DepartmentCreateDto createDto);
+
+    /**
+     * 获取部门路径
+     * @param id
+     * @return
+     */
+    String buildDepartmentPath(Long id);
 }

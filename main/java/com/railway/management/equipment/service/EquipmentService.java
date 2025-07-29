@@ -69,5 +69,5 @@ public interface EquipmentService extends IService<Equipment> {
      * @param adminUserId 管理员ID
      * @return 设备详情DTO列表
      */
-    List<EquipmentDetailDto> getEquipmentsByAdminUser(Long adminUserId);
+    List<EquipmentDetailDto> getEquipmentsByAdminUser(Long adminUserId,String departmentPath);
 }

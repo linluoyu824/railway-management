@@ -213,7 +213,8 @@ public class EquipmentServiceImpl extends ServiceImpl<EquipmentMapper, Equipment
     }
 
     @Override
-    public List<EquipmentDetailDto> getEquipmentsByAdminUser(Long adminUserId) {
-        return baseMapper.selectDetailsByAdminUserId(adminUserId);
+    public List<EquipmentDetailDto> getEquipmentsByAdminUser(Long adminUserId, String departmentPath) {
+
+        return baseMapper.selectDetailsByAdminUserId(adminUserId,departmentPath);
     }
 }

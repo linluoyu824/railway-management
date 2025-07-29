@@ -78,7 +78,7 @@ public class UserImportListener extends AnalysisEventListener<UserImportDto> {
             user.setPositionId(position != null ? position.getId() : null);
 
             // Generate default username and password
-            user.setUsername(employeeId); // Use employeeId as username
+            user.setUsername(data.getMobilePhone()); // Use mobilePhone as username
             user.setPassword(passwordEncoder.encode("123456")); // Default password, should be configurable
             user.generatePinyinCode(); // Generate pinyin from fullName
 
