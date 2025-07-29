@@ -9,32 +9,37 @@ import com.railway.management.user.model.User;
 import java.io.InputStream;
 import java.util.List;
 
+/**
+ * 用户服务接口
+ */
 public interface UserService {
     /**
-     * 注册用户
+     * 注册新用户
      *
-     * @param registrationDto 注册信息
-     * @return 已注册的用户
+     * @param registrationDto 用户注册信息
+     * @return 创建后的用户实体
+     * @throws com.railway.management.user.exception.UserAlreadyExistsException 如果用户名或员工号已存在
      */
     User registerUser(UserRegistrationDto registrationDto);
 
     /**
-     * 职位变更
+     * 更新用户职位
      *
      * @param userId        用户ID
-     * @param newPositionId 新职位ID  
-     * @return 更新后的用户
+     * @param newPositionId 新职位ID
+     * @return 更新后的用户实体
      */
     User updateUserPosition(Long userId, Long newPositionId);
 
     /**
-     * @param jobLevel
-     * @return
+     * 根据职级获取员工列表
+     * @param jobLevel 职级
+     * @return 用户实体列表
      */
     List<User> getEmployeesByLevel(Integer jobLevel);
 
     /**
-     * 获取职工列表（分页）
+     * 分页获取其管理的职工列表
      *
      * @param page 分页信息
      * @return 分页后的职工列表 (IPage<UserDto>)
@@ -42,14 +47,14 @@ public interface UserService {
     IPage<UserDto> getManagedEmployees(Page<UserDto> page);
 
     /**
-     * excel批量导入
-     * @param inputStream
-     * @return
+     * 从Excel批量导入用户
+     * @param inputStream Excel文件输入流
+     * @return 导入结果报告
      */
     UserImportResultDto importUsersFromExcel(InputStream inputStream);
     
     /**
-     * 验证登录凭证是否正确
+     * 验证用户登录凭证
      *
      * @param username 用户名
      * @param password 密码
@@ -57,6 +62,10 @@ public interface UserService {
      */
     boolean validateCredentials(String username, String password);
 
-    // Method to generate a token for a validated user
+    /**
+     * 为已验证的用户生成登录令牌
+     * @param username 用户名
+     * @return 登录令牌 (Token)
+     */
     String generateLoginToken(String username);
 }
