@@ -3,10 +3,10 @@ package com.railway.management.utils;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.read.listener.ReadListener;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.railway.management.department.dto.DepartmentImportDto;
-import com.railway.management.department.mapper.DepartmentMapper;
-import com.railway.management.department.model.Department;
-import com.railway.management.user.dto.UserImportResultDto;
+import com.railway.management.common.dto.ExcelImportResult;
+import com.railway.management.common.department.dto.DepartmentImportDto;
+import com.railway.management.common.department.mapper.DepartmentMapper;
+import com.railway.management.common.department.model.Department;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class DepartmentImportListener implements ReadListener<DepartmentImportDto> {
 
     private final DepartmentMapper departmentMapper;
-    private final UserImportResultDto result;
+    private final ExcelImportResult<DepartmentImportDto> result;
 
     // 使用缓存避免在同一次导入中重复查询相同的部门
     private final Map<String, Department> departmentCache = new ConcurrentHashMap<>();
@@ -37,18 +37,16 @@ public class DepartmentImportListener implements ReadListener<DepartmentImportDt
             Department level2 = findOrCreateDepartment(data.getLevelTwoDepartment(), level1);
             Department level3 = findOrCreateDepartment(data.getLevelThreeDepartment(), level2);
             findOrCreateDepartment(data.getLevelFourDepartment(), level3); // 最后一级
-
-            result.setSuccessCount(result.getSuccessCount() + 1);
+            result.incrementSuccessCount(1);
         } catch (Exception e) {
             log.error("处理部门导入第 {} 行数据失败: {}", rowIndex, data, e);
-            result.setFailureCount(result.getFailureCount() + 1);
-            result.addFailureDetail("第 " + rowIndex + " 行处理失败: " + e.getMessage());
+            result.addFailure(data, "第 " + rowIndex + " 行处理失败: " + e.getMessage());
         }
     }
 
     @Override
     public void doAfterAllAnalysed(AnalysisContext context) {
-        log.info("部门Excel导入完成。成功: {}, 失败: {}", result.getSuccessCount(), result.getFailureCount());
+        log.info("部门Excel导入完成。成功: {}, 失败: {}", result.getSuccessCount(), result.getFailedRows().size());
     }
 
     /**

@@ -3,14 +3,14 @@ package com.railway.management.utils;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.railway.management.department.mapper.DepartmentMapper;
-import com.railway.management.department.model.Department;
+import com.railway.management.common.dto.ExcelImportResult;
+import com.railway.management.common.department.mapper.DepartmentMapper;
+import com.railway.management.common.department.model.Department;
 import com.railway.management.permission.position.mapper.PositionMapper;
 import com.railway.management.permission.position.model.Position;
-import com.railway.management.user.dto.UserImportDto;
-import com.railway.management.user.dto.UserImportResultDto;
-import com.railway.management.user.mapper.UserMapper;
-import com.railway.management.user.model.User;
+import com.railway.management.common.user.dto.UserImportDto;
+import com.railway.management.common.user.mapper.UserMapper;
+import com.railway.management.common.user.model.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.StringUtils;
@@ -27,13 +27,13 @@ public class UserImportListener extends AnalysisEventListener<UserImportDto> {
     private final DepartmentMapper departmentMapper;
     private final PositionMapper positionMapper;
     private final PasswordEncoder passwordEncoder;
-    private final UserImportResultDto result;
+    private final ExcelImportResult<UserImportDto> result;
 
     // Caches to avoid repeated DB queries during a single import
     private final Map<String, Department> departmentCache = new HashMap<>();
     private final Map<String, Position> positionCache = new HashMap<>();
 
-    public UserImportListener(UserMapper userMapper, DepartmentMapper departmentMapper, PositionMapper positionMapper, PasswordEncoder passwordEncoder, UserImportResultDto result) {
+    public UserImportListener(UserMapper userMapper, DepartmentMapper departmentMapper, PositionMapper positionMapper, PasswordEncoder passwordEncoder, ExcelImportResult<UserImportDto> result) {
         this.userMapper = userMapper;
         this.departmentMapper = departmentMapper;
         this.positionMapper = positionMapper;
@@ -45,15 +45,13 @@ public class UserImportListener extends AnalysisEventListener<UserImportDto> {
     public void invoke(UserImportDto data, AnalysisContext context) {
         String employeeId = data.getEmployeeId();
         if (!StringUtils.hasText(employeeId)) {
-            result.setFailureCount(result.getFailureCount() + 1);
-            result.addFailureDetail("第 " + (context.readRowHolder().getRowIndex() + 1) + " 行：工号为空，跳过。");
+            result.addFailure(data, "第 " + (context.readRowHolder().getRowIndex() + 1) + " 行：工号为空");
             return;
         }
 
         // 1. Check if user already exists
         if (userMapper.selectCount(new QueryWrapper<User>().eq("employee_id", employeeId)) > 0) {
-            result.setFailureCount(result.getFailureCount() + 1);
-            result.addFailureDetail("工号 " + employeeId + " 已存在，跳过。");
+            result.addFailure(data, "工号 " + employeeId + " 已存在");
             return;
         }
 
@@ -61,8 +59,7 @@ public class UserImportListener extends AnalysisEventListener<UserImportDto> {
             // 2. Handle department hierarchy
             Department finalDepartment = getOrCreateDepartmentHierarchy(data);
             if (finalDepartment == null) {
-                result.setFailureCount(result.getFailureCount() + 1);
-                result.addFailureDetail("工号 " + employeeId + "：未能确定部门信息，跳过。");
+                result.addFailure(data, "未能确定部门信息");
                 return;
             }
 
@@ -84,14 +81,10 @@ public class UserImportListener extends AnalysisEventListener<UserImportDto> {
 
             userMapper.insert(user);
 
-            // ** FIX: Use the correct methods to record success **
-            result.setSuccessCount(result.getSuccessCount() + 1);
-            result.addSuccessDetail("成功导入用户：" + data.getFullName() + " (工号: " + employeeId + ")");
-
+            result.incrementSuccessCount(1);
         } catch (Exception e) {
             log.error("导入用户失败，工号: {}", employeeId, e);
-            result.setFailureCount(result.getFailureCount() + 1);
-            result.addFailureDetail("工号 " + employeeId + " 导入失败: " + e.getMessage());
+            result.addFailure(data, "导入失败: " + e.getMessage());
         }
     }
 
@@ -153,6 +146,6 @@ public class UserImportListener extends AnalysisEventListener<UserImportDto> {
 
     @Override
     public void doAfterAllAnalysed(AnalysisContext context) {
-        log.info("所有数据解析完成！成功: {}, 失败: {}", result.getSuccessCount(), result.getFailureCount());
+        log.info("所有数据解析完成！成功: {}, 失败: {}", result.getSuccessCount(), result.getFailedRows().size());
     }
 }

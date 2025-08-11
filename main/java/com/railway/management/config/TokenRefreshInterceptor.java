@@ -1,6 +1,6 @@
 package com.railway.management.config;
 
-import com.railway.management.user.service.TokenCacheService;
+import com.railway.management.common.user.service.TokenCacheService;
 import jakarta.servlet.http.HttpServletRequest;
         import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.HandlerInterceptor;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.railway.management.user.model.LoginError;
+import com.railway.management.common.user.model.LoginError;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 

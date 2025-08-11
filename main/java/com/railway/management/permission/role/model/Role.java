@@ -1,7 +1,7 @@
 package com.railway.management.permission.role.model;
 
 import com.baomidou.mybatisplus.annotation.*;
-import com.railway.management.department.model.Department;
+import com.railway.management.common.department.model.Department;
 import com.railway.management.permission.model.Permission;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
