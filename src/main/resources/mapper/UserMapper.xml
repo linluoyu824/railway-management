@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.railway.management.user.mapper.UserMapper">
+
+    <!-- Result Map to map the query results to UserDto -->
+    <resultMap id="UserDtoResultMap" type="com.railway.management.common.user.dto.UserDto">
+        <id column="id" property="id"/>
+        <result column="username" property="username"/>
+        <result column="full_name" property="fullName"/>
+        <result column="employee_id" property="employeeId"/>
+        <!-- Add mappings for other fields if you include them in UserDto -->
+    </resultMap>
+
+    <select id="selectUserPage" resultMap="UserDtoResultMap">
+        SELECT id, username, full_name, employee_id  <!-- Customize your SQL here, e.g., with joins -->
+        FROM users
+    </select>
+
+    <!-- Result Map for UserSimpleDto -->
+    <resultMap id="UserSimpleDtoResultMap" type="com.railway.management.common.user.dto.UserSimpleDto">
+        <id column="id" property="id"/>
+        <result column="full_name" property="fullName"/>
+        <result column="employee_id" property="employeeId"/>
+        <result column="job_title" property="jobTitle"/>
+        <result column="mobile_phone" property="mobilePhone"/>
+    </resultMap>
+
+    <select id="selectUsersByDepartmentPage" resultMap="UserSimpleDtoResultMap">
+        SELECT id, full_name, employee_id, job_title, mobile_phone FROM users WHERE department_id = #{departmentId}
+    </select>
+
+    <select id="selectByUsername" resultType="com.railway.management.common.user.model.User">
+        SELECT * FROM users WHERE mobile_phone = #{username}
+    </select>
+</mapper>

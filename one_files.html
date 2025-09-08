@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人导入列表</title>
+    <style>
+        /* 基础样式 */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f7f9;
+            color: #333;
+        }
+        .page-title {
+            font-size: 32px;
+            color: #1a2b3c;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap; /* 允许内容换行 */
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        .main-content {
+            flex: 1;
+            min-width: 0; /* 防止flex项目内容溢出 */
+            padding: 20px 30px;
+            border-right: 1px solid #eaecef; /* 添加右边框作为分割线 */
+        }
+
+        h1 {
+            font-size: 24px;
+            color: #2c3e50;
+            border-bottom: 1px solid #eaecef;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .main-title {
+            text-align: center;
+            font-size: 28px;
+            flex-basis: 100%; /* 让标题占据整行宽度 */
+            color: #1a2b3c;
+            margin-bottom: 10px;
+        }
+
+        /* 查询区域 */
+        .query-section {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .query-section input[type="text"],
+        .query-section input[type="date"] {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .query-section button {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .query-section button:hover {
+            background-color: #0056b3;
+        }
+
+        /* 列表区域 */
+        .table-container {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+        th, td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eaecef;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #fff;
+            white-space: nowrap;
+        }
+        .status-completed { background-color: #28a745; }
+        .status-processing { background-color: #ffc107; color: #333; }
+        .status-failed { background-color: #dc3545; }
+
+        .actions button {
+            margin-right: 5px;
+            padding: 5px 10px;
+            font-size: 12px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-radius: 4px;
+        }
+        .btn-view {
+            background-color: #17a2b8;
+            color: white;
+        }
+        .btn-view:hover { background-color: #138496; }
+        .btn-delete {
+            background-color: #dc3545;
+            color: white;
+        }
+        .btn-action {
+            background-color: #3498db; /* 浅蓝色 */
+            color: white; /* 白色字体 */
+            border: none;
+            transition: background-color 0.2s;
+        }
+        .btn-action:hover {
+            background-color: #2980b9; /* 悬停时颜色变深 */
+        }
+        .btn-delete:hover { background-color: #c82333; }
+
+        /* 加载和错误提示 */
+        .loading, .error {
+            text-align: center;
+            padding: 40px;
+            font-size: 16px;
+            color: #666;
+        }
+        .error {
+            color: #dc3545;
+        }
+
+        /* 右侧功能按钮列 */
+        .sidebar-actions {
+            width: 240px;
+            flex-shrink: 0;
+            padding: 20px; /* 为整个侧边栏添加内边距 */
+            display: flex;
+        }
+        .actions-group {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+        .actions-buttons-wrapper {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* 将按钮垂直均匀分布，首尾贴边 */
+        }
+        .sidebar-actions button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            text-align: left;
+            font-size: 14px;
+            border-radius: 5px; /* 添加圆角 */
+        }
+    </style>
+</head>
+<body>
+    <h1 class="page-title">LKJ运行记录数据分析</h1>
+    <div class="container">
+        <h2 class="main-title">数据查询及管理</h2>
+        <div class="main-content">
+            <h1>已分析的LKJ文件列表</h1>
+
+            <!-- 数据查询区域 -->
+            <div class="query-section">
+                <input type="text" id="fileNameInput" placeholder="输入文件名关键字...">
+                <input type="date" id="startDateInput">
+                <span>至</span>
+                <input type="date" id="endDateInput">
+                <button id="searchBtn">查询</button>
+            </div>
+
+            <!-- 列表管理区域 -->
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>文件名</th>
+                            <th>分析日期</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fileListBody">
+                        <!-- 数据行将由JS动态生成 -->
+                    </tbody>
+                </table>
+                <div id="loadingIndicator" class="loading" style="display: none;">正在加载数据...</div>
+                <div id="errorIndicator" class="error" style="display: none;"></div>
+                <div id="noDataIndicator" class="loading" style="display: none;">没有找到匹配的数据。</div>
+            </div>
+
+            <!--  合并后的违章项点列表 -->
+            <h1>违章项点列表</h1>
+            <div class="query-section">
+                <input type="text" id="violationInput" placeholder="输入项点名称关键字...">
+                <button id="searchViolationBtn">查询</button>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>项点名称</th>
+                            <th>类型</th>
+                            <th>描述</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="violationListBody"></tbody>
+                </table>
+                <div id="loadingCustomViolations" class="loading" style="display: none;">正在加载数据...</div>
+                <div id="noViolationIndicator" class="loading" style="display: none;">没有找到匹配的项点。</div>
+            </div>
+        </div>
+
+        <div class="sidebar-actions">
+            <div class="actions-group">
+                <h1>功能操作</h1>
+                <div class="actions-buttons-wrapper">
+                    <button class="btn-action" data-action="import-basic">基础模板导入</button>
+                    <button class="btn-action" data-action="import-temp">临时项点模板导入</button>
+                    <button class="btn-action" data-action="import-custom">定制化模板导入/查询</button>
+                    <button class="btn-action" data-action="export-video">视频截取文件导出</button>
+                    <button class="btn-action" data-action="analyze-manual">人工分析签属意见栏分析/考核</button>
+                </div>
+            </div>
+            <!-- Hidden file inputs for import actions -->
+            <input type="file" id="basicTemplateInput" style="display: none;" accept=".xlsx, .xls" />
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const fileListBody = document.getElementById('fileListBody');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const errorIndicator = document.getElementById('errorIndicator');
+            const noDataIndicator = document.getElementById('noDataIndicator');
+            const searchBtn = document.getElementById('searchBtn');
+            const fileNameInput = document.getElementById('fileNameInput');
+
+            // 右侧功能按钮
+            const sidebar = document.querySelector('.sidebar-actions');
+            const basicTemplateInput = document.getElementById('basicTemplateInput');
+
+            let allFiles = []; // 存储从后台获取的所有文件
+
+            // 违章列表相关
+            const violationListBody = document.getElementById('violationListBody');
+            const loadingViolations = document.getElementById('loadingCustomViolations');
+            const noViolationIndicator = document.getElementById('noViolationIndicator');
+            const searchViolationBtn = document.getElementById('searchViolationBtn');
+            const violationInput = document.getElementById('violationInput');
+            let allViolations = []; // 存储合并后的项点数据
+
+            // 模拟从后台获取数据
+            async function fetchLkjFiles() {
+                loadingIndicator.style.display = 'block';
+                errorIndicator.style.display = 'none';
+                fileListBody.innerHTML = '';
+                noDataIndicator.style.display = 'none';
+
+                try {
+                    // 模拟网络延迟
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+
+                    // 模拟API返回的数据
+                    const mockData = [
+                        { id: 1, name: 'LKJ_GZ_20231026_001.dat', analysisDate: '2023-10-26 10:00', status: 'Completed' },
+                        { id: 2, name: 'LKJ_SH_20231026_002.dat', analysisDate: '2023-10-26 11:30', status: 'Processing' },
+                        { id: 3, name: 'LKJ_BJ_20231027_001.dat', analysisDate: '2023-10-27 09:15', status: 'Failed' },
+                        { id: 4, name: 'LKJ_GZ_20231027_003.dat', analysisDate: '2023-10-27 14:00', status: 'Completed' },
+                        { id: 5, name: 'LKJ_CD_20231028_005.dat', analysisDate: '2023-10-28 16:20', status: 'Completed' },
+                        { id: 6, name: 'LKJ_SZ_20231029_008.dat', analysisDate: '2023-10-29 08:45', status: 'Processing' },
+                    ];
+                    
+                    // 模拟一个随机的API错误
+                    if (Math.random() < 0.1) {
+                        throw new Error('无法连接到服务器，请稍后重试。');
+                    }
+
+                    allFiles = mockData;
+                    renderTable(allFiles);
+
+                } catch (error) {
+                    errorIndicator.textContent = error.message;
+                    errorIndicator.style.display = 'block';
+                } finally {
+                    loadingIndicator.style.display = 'none';
+                }
+            }
+
+            // 渲染表格数据
+            function renderTable(files) {
+                fileListBody.innerHTML = '';
+                if (files.length === 0) {
+                    noDataIndicator.style.display = 'block';
+                    return;
+                }
+                noDataIndicator.style.display = 'none';
+
+                files.forEach(file => {
+                    const tr = document.createElement('tr');
+                    
+                    // 将id存储在DOM元素上，用于后续操作
+                    tr.dataset.id = file.id;
+
+                    const statusClass = `status-${file.status.toLowerCase()}`;
+
+                    tr.innerHTML = `
+                        <td>${file.name}</td>
+                        <td>${file.analysisDate}</td>
+                        <td><span class="status ${statusClass}">${file.status}</span></td>
+                        <td class="actions">
+                            <button class="btn-view" data-id="${file.id}">查看</button>
+                            <button class="btn-delete" data-id="${file.id}">删除</button>
+                        </td>
+                    `;
+                    fileListBody.appendChild(tr);
+                });
+            }
+
+            // 处理查询逻辑
+            function handleSearch() {
+                const keyword = fileNameInput.value.toLowerCase();
+                // (可以扩展日期范围的过滤逻辑)
+                
+                const filteredFiles = allFiles.filter(file => 
+                    file.name.toLowerCase().includes(keyword)
+                );
+                renderTable(filteredFiles);
+            }
+
+            // --- 违章项点列表逻辑 ---
+            async function fetchViolations() {
+                loadingViolations.style.display = 'block';
+                await new Promise(resolve => setTimeout(resolve, 800)); // 模拟延迟
+
+                const basicData = [
+                    { id: 101, name: '超速行驶', type: '速度控制', description: '超过线路规定速度' },
+                    { id: 102, name: '信号冒进', type: '信号系统', description: '未按信号指令行车' },
+                ];
+
+                 const customData = [
+                    { id: 201, name: '停车位置不当', type: '站场作业', description: '超出停车标范围' },
+                    { id: 102, name: '信号冒进', type: '信号系统', description: '未按信号指令行车' },
+                    { id: 202, name: '鸣笛时机错误', type: '操作规范', description: '未在规定地点鸣笛' },
+                ];
+
+                // 使用Set来存储已经存在的项点名称，以便去重
+                const existingNames = new Set(basicData.map(item => item.name));
+
+                // 合并两个数组，保留第一个数组的数据，并去重
+                allViolations = [...basicData];
+                customData.forEach(item => {
+                    if (!existingNames.has(item.name)) {
+                        allViolations.push(item);
+                        existingNames.add(item.name);
+                    }
+                });
+
+                renderViolationTable(allViolations);
+                loadingViolations.style.display = 'none';
+            }
+
+             // 处理查询逻辑
+            function handleViolationSearch() {
+                const keyword = violationInput.value.toLowerCase();
+                const filteredItems = allViolations.filter(item => 
+                    item.name.toLowerCase().includes(keyword)
+                );
+                renderViolationTable(filteredItems);
+            }
+
+            // --- 通用违章列表渲染函数 ---
+            function renderViolationTable(items) {
+                violationListBody.innerHTML = '';
+                if (items.length === 0) {
+                    noViolationIndicator.style.display = 'block';
+                    return;
+                }
+                noViolationIndicator.style.display = 'none';
+                items.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.dataset.id = item.id; // 存储ID
+
+                    tr.innerHTML = `
+                        <td>${item.name}</td>
+                        <td>${item.type}</td>
+                        <td>${item.description}</td>
+                        <td class="actions">
+                            <button class="btn-view" data-id="${item.id}">查看</button>
+                            <button class="btn-delete" data-id="${item.id}">删除</button>
+                        </td>
+                    `;
+                    violationListBody.appendChild(tr);
+                });
+            }
+
+
+            // 事件绑定
+            searchBtn.addEventListener('click', handleSearch);
+            fileNameInput.addEventListener('keyup', (event) => {
+                if (event.key === 'Enter') {
+                    handleSearch();
+                }
+            });
+
+            fileListBody.addEventListener('click', (event) => {
+                const target = event.target;
+                // 确保点击的是行内的按钮
+                const fileId = target.closest('button')?.dataset.id;
+                if (!fileId) return;
+
+                if (target.classList.contains('btn-view')) {
+                    alert(`正在查看文件 ID: ${fileId}`);
+                }
+
+                if (target.classList.contains('btn-delete')) {
+                    if (confirm(`确定要删除文件 ID: ${fileId} 吗？`)) {
+                        alert(`正在删除文件 ID: ${fileId}`);
+                    }
+                }
+            });
+
+            // 违章列表事件绑定
+            searchViolationBtn.addEventListener('click', handleViolationSearch);
+            violationInput.addEventListener('keyup', (event) => {
+                if (event.key === 'Enter') handleViolationSearch();
+            });
+
+            violationListBody.addEventListener('click', (event) => {
+                const target = event.target;
+                const itemId = target.closest('button')?.dataset.id;
+                if (!itemId) return;
+
+                if (target.classList.contains('btn-view')) alert(`查看违章项点 ID: ${itemId}`);
+                if (target.classList.contains('btn-delete')) alert(`删除违章项点 ID: ${itemId}`);
+            });
+
+            // 右侧全局功能按钮事件绑定
+            sidebar.addEventListener('click', (event) => {
+                const target = event.target;
+                if (!target.classList.contains('btn-action')) return;
+
+                const action = target.dataset.action;
+                if (action === 'import-basic') {
+                    // 触发隐藏的文件输入框
+                    basicTemplateInput.click();
+                } else {
+                    alert(`执行独立功能: ${target.textContent}`);
+                }
+            });
+
+            // 为隐藏的文件输入框添加事件监听
+            basicTemplateInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    alert(`已选择文件: ${file.name}\n即将开始上传...`);
+                    
+                    const formData = new FormData();
+                    formData.append('templateFile', file);
+
+                    // 在实际应用中，这里会使用 fetch API 将 formData 发送到后端
+                    console.log('正在上传文件:', formData.get('templateFile'));
+
+                    // 模拟上传成功
+                    setTimeout(() => alert(`文件 "${file.name}" 上传成功!`), 500);
+                }
+                event.target.value = null; // 重置输入框，以便可以再次选择相同的文件
+            });
+
+            // 页面初始化时加载数据
+            fetchLkjFiles();
+            fetchViolations();
+        });
+</script></body></html>
