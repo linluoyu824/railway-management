@@ -3,10 +3,9 @@ package com.railway.management.equipment.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.railway.management.common.dto.ExcelImportResult;
-import com.railway.management.equipment.dto.EquipmentImportDto;
-import com.railway.management.equipment.dto.EquipmentDetailDto;
+import com.railway.management.equipment.dto.*;
 import com.railway.management.equipment.model.Equipment;
-import com.railway.management.equipment.dto.EquipmentUpdateDto;
+import com.railway.management.equipment.model.EquipmentInspectionLog;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
@@ -73,4 +72,23 @@ public interface EquipmentService extends IService<Equipment> {
      */
 
     List<EquipmentDetailDto> getEquipmentsByAdminUser(Long adminUserId,String departmentPath);
+
+    /**
+     * 处理设备的NFC扫描事件 (记录巡检日志)
+     * @param nfcId 设备的NFC ID
+     * @return 生成的设备巡检日志
+     */
+    EquipmentInspectionLog processNfcScan(String nfcId);
+
+    /**
+     * 更新设备参数，并记录历史
+     * @param request 包含设备ID和新参数值的请求
+     */
+    void updateParameters(EquipmentParameterUpdateRequest request);
+    /**
+     * 通过NFC扫描创建新设备
+     * @param dto 包含NFC ID和设备信息的DTO
+     * @return 创建的设备实体
+     */
+    Equipment createFromNfc(EquipmentCreateNfcDto dto);
 }

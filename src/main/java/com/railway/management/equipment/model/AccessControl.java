@@ -2,6 +2,7 @@ package com.railway.management.equipment.model;
 
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
+
 import java.time.LocalDateTime;
 
 @Data
@@ -24,4 +25,13 @@ public class AccessControl {
     private String departmentPath;
     @TableField("status")
     private AccessControlStatus status;
+    private String nfcId;
+
+    public void setNfcId(String nfcId) {
+        this.nfcId = nfcId;
+    }
+
+    public String getNfcId() {
+        return nfcId;
+    }
 }

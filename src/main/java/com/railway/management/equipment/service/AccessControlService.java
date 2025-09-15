@@ -2,11 +2,11 @@ package com.railway.management.equipment.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.railway.management.equipment.dto.AccessControlCreateDto;
-import com.railway.management.equipment.dto.AccessControlLogCreateDto;
-import com.railway.management.equipment.dto.AccessControlUpdateDto;
+import com.railway.management.equipment.dto.*;
 import com.railway.management.equipment.model.AccessControl;
+import com.railway.management.equipment.model.AccessControlAction;
 import com.railway.management.equipment.model.AccessControlLog;
+import com.railway.management.equipment.model.AccessPermissionRequest;
 
 /**
  * 门禁设备服务接口
@@ -36,10 +36,19 @@ public interface AccessControlService extends IService<AccessControl> {
      * @param id 门禁设备ID
      */
     void deleteAccessControl(Long id);
+
     /**
-     * 记录门禁操作（如开门、关门）
-     * @param logDto 门禁操作日志的数据传输对象
-     * @return 创建的门禁操作日志实体
+     * 记录由用户NFC刷卡触发的门禁事件 (如进门、出门)
+     * @param accessControlId 门禁ID
+     * @param action 门禁操作类型 (ENTER/EXIT)
+     * @return 记录的门禁日志实体
+     */
+    AccessControlLog recordAccess(Long accessControlId, AccessControlAction action);
+
+    /**
+     * 记录由门禁设备本身触发的物理事件 (如门磁开关、报警)
+     * @param logDto 包含事件详情的DTO
+     * @return 记录的门禁日志实体
      */
     AccessControlLog recordAction(AccessControlLogCreateDto logDto);
     /**
@@ -49,4 +58,13 @@ public interface AccessControlService extends IService<AccessControl> {
      * @return 门禁操作记录分页数据
      */
     IPage<AccessControlLog> getLogsByAccessControlId(IPage<AccessControlLog> page, Long accessControlId);
+
+    /**
+     * 通过NFC扫描创建新门禁
+     * @param dto 包含NFC ID和门禁信息的DTO
+     * @return 创建的门禁实体
+     */
+    AccessControl createFromNfc(AccessControlCreateNfcDto dto);
+
+    AccessPermissionRequest applyForPermission(RequestAccessDto requestDto);
 }

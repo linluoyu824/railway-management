@@ -3,6 +3,7 @@ package com.railway.management.equipment.model;
 import com.baomidou.mybatisplus.annotation.*;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.railway.management.common.user.model.User;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -15,6 +16,8 @@ public class Equipment {
 
     @TableId(type = IdType.AUTO)
     private Long id;
+
+    private @NotBlank String nfcId;
 
     private String departmentPath;
     /** 设备名称 */
@@ -83,4 +86,5 @@ public class Equipment {
 
     @TableField(value = "updated_by", fill = FieldFill.INSERT_UPDATE)
     private String updatedBy;
+
 }

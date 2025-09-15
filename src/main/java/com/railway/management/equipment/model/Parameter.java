@@ -1,23 +1,17 @@
 package com.railway.management.equipment.model;
 
-import lombok.AllArgsConstructor;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
+@TableName("equipment_parameter")
 public class Parameter {
-    /**
-     * 参数名称, e.g., "额定电压"
-     */
+    @TableId(type = IdType.AUTO)
+    private Long id;
+    private Long equipmentId;
     private String name;
-    /**
-     * 参数值, e.g., "220"
-     */
     private String value;
-    /**
-     * 参数单位, e.g., "V"
-     */
     private String unit;
 }

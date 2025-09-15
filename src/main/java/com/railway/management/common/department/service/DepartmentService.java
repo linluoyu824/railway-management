@@ -2,17 +2,23 @@ package com.railway.management.common.department.service;
 
 import cn.hutool.core.lang.tree.Tree;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.railway.management.common.dto.ExcelImportResult;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.railway.management.common.department.dto.DepartmentCreateDto;
 import com.railway.management.common.department.model.Department;
+import com.railway.management.common.dto.ExcelImportResult;
 import com.railway.management.common.user.dto.UserSimpleDto;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
-public interface DepartmentService {
+public interface DepartmentService extends IService<Department> {
+    @Transactional
+    Department createDepartment(DepartmentCreateDto createDto);
+
+    String buildDepartmentPath(Long departmentId);
 
     /**
      * 获取部门树形结构
@@ -28,28 +34,12 @@ public interface DepartmentService {
      * 分页查询指定部门下的用户列表
      */
     IPage<UserSimpleDto> listUsersByDepartment(Long departmentId, IPage<UserSimpleDto> page);
-
     /**
      * 从Excel批量导入部门
      */
     ExcelImportResult importDepartments(InputStream inputStream);
-
     /**
-     * 下载部门导入模板
+     * 下载导入模板
      */
     void downloadTemplate(HttpServletResponse response) throws IOException;
-
-    /**
-     * 创建新部门
-     * @param createDto 部门创建信息
-     * @return 创建后的部门实体
-     */
-    Department createDepartment(DepartmentCreateDto createDto);
-
-    /**
-     * 获取部门路径
-     * @param id
-     * @return
-     */
-    String buildDepartmentPath(Long id);
 }

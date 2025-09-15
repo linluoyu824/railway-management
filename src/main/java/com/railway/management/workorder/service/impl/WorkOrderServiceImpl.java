@@ -5,24 +5,26 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.railway.management.workorder.dto.CreateWorkOrderRequest;
-import com.railway.management.workorder.dto.WorkOrderListResponse;
-import com.railway.management.workorder.dto.WorkOrderQueryRequest;
-import com.railway.management.workorder.dto.UpdateWorkOrderStatusRequest;
+import com.railway.management.common.user.model.User;
+import com.railway.management.common.user.service.UserService;
+import com.railway.management.equipment.model.Equipment;
+import com.railway.management.equipment.model.Tool;
+import com.railway.management.equipment.model.WorkInstruction;
+import com.railway.management.equipment.service.EquipmentService;
+import com.railway.management.equipment.service.ToolService;
+import com.railway.management.storage.service.FileStorageService;
+import com.railway.management.utils.SecurityUtils;
+import com.railway.management.workorder.dto.*;
+import com.railway.management.workorder.mapper.WorkAttendanceMapper;
 import com.railway.management.workorder.mapper.WorkOrderMapper;
 import com.railway.management.workorder.mapper.WorkOrderStepImageMapper;
+import com.railway.management.workorder.model.WorkAttendance;
 import com.railway.management.workorder.model.WorkOrder;
 import com.railway.management.workorder.model.WorkOrderStatus;
 import com.railway.management.workorder.model.WorkOrderStepImage;
 import com.railway.management.workorder.service.WorkOrderService;
-import com.railway.management.common.user.model.User;
-import com.railway.management.common.user.service.UserService;
-import com.railway.management.equipment.model.Equipment;
-import com.railway.management.equipment.model.WorkInstruction; // 假设存在 WorkInstruction 模型
-import com.railway.management.equipment.service.EquipmentService;
-import com.railway.management.equipment.model.Tool; // 假设存在 Tool 模型
 import lombok.RequiredArgsConstructor;
-import com.railway.management.storage.service.FileStorageService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -36,10 +38,10 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
-import com.railway.management.utils.SecurityUtils;
-import com.railway.management.equipment.service.ToolService;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class WorkOrderServiceImpl implements WorkOrderService {
@@ -50,6 +52,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     private final UserService userService;
     private final EquipmentService equipmentService;
     private final ToolService toolService;
+    private final WorkAttendanceMapper workAttendanceMapper;
 
     @Override
     @Transactional
@@ -74,7 +77,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
         String assigneeNamesStr = assignees.stream().map(User::getUsername).collect(Collectors.joining(", "));
 
         // 3.5. 获取工具信息
-        List<Tool> tools = toolService.getByIds(request.getToolIds());
+        List<Tool> tools = toolService.listByIds(request.getToolIds());
         if (tools.size() != request.getToolIds().size()) {
             throw new RuntimeException("部分指定的工具不存在");
         }
@@ -82,6 +85,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
 
         // 4. 构建工单实体
         WorkOrder workOrder = new WorkOrder()
+                .setType(request.getType())
                 .setEquipmentId(request.getEquipmentId())
                 .setEquipmentName(equipment.getName())
                 .setDescription(request.getDescription())
@@ -99,8 +103,46 @@ public class WorkOrderServiceImpl implements WorkOrderService {
 
         // 5. 保存到数据库
         workOrderMapper.insert(workOrder);
+        log.info("新工单已创建, ID: {}, 类型: {}", workOrder.getId(), workOrder.getType());
 
         return workOrder;
+    }
+
+
+    @Override
+    @Transactional
+    public void recordAttendance(RecordAttendanceRequest request) {
+        // 1. 校验工单是否存在
+        WorkOrder workOrder = workOrderMapper.selectById(request.getWorkOrderId());
+        Assert.notNull(workOrder, "ID为 {} 的工单不存在", request.getWorkOrderId());
+
+        // 2. 批量查询用户信息，以减少数据库查询次数
+        List<User> users = userService.listByIds(request.getUserIds());
+        Map<Long, String> userMap = users.stream()
+                .collect(Collectors.toMap(User::getId, User::getUsername));
+
+        // 3. 校验所有传入的userIds是否都有效
+        for (Long userId : request.getUserIds()) {
+            Assert.isTrue(userMap.containsKey(userId), "ID为 {} 的用户不存在", userId);
+        }
+
+        // 4. 遍历并创建出工记录
+        List<WorkAttendance> attendanceList = request.getUserIds().stream().map(userId -> {
+            WorkAttendance attendance = new WorkAttendance();
+            attendance.setWorkOrderId(request.getWorkOrderId());
+            attendance.setUserId(userId);
+            attendance.setUsername(userMap.get(userId));
+            attendance.setAttendanceType(request.getAttendanceType());
+            attendance.setLocation(request.getLocation());
+            attendance.setAttendanceTime(LocalDateTime.now());
+            return attendance;
+        }).collect(Collectors.toList());
+
+        // 5. 批量插入出工记录 (注意: IService 默认没有批量插入, 这里循环插入)
+        // 为提高性能, 可以在 WorkAttendanceMapper 中自定义一个批量插入方法
+        attendanceList.forEach(workAttendanceMapper::insert);
+
+        log.info("为工单ID {} 记录了 {} 条 {} 类型的出工记录", request.getWorkOrderId(), attendanceList.size(), request.getAttendanceType());
     }
 
     @Override
@@ -227,11 +269,21 @@ public class WorkOrderServiceImpl implements WorkOrderService {
         stepImage.setStepDescription(stepDescription);
         stepImage.setImageUrl(imageUrl);
         stepImage.setUploadedBy(currentUser.getId());
-        stepImage.setUploaderName(currentUser.getName()); // 确保与 createWorkOrder 一致
+        stepImage.setUploaderName(currentUser.getUsername()); // 确保与 createWorkOrder 一致
         stepImage.setCreatedAt(LocalDateTime.now());
-
         workOrderStepImageMapper.insert(stepImage);
 
         return stepImage;
+    }
+
+    @Override
+    public List<WorkOrderStepImage> getStepImagesByWorkOrderId(Long workOrderId) {
+        Assert.notNull(workOrderId, "工单ID不能为空");
+
+        // 使用QueryWrapper按工单ID查询，并按步骤编号升序排序
+        return workOrderStepImageMapper.selectList(
+                new QueryWrapper<WorkOrderStepImage>()
+                        .eq("work_order_id", workOrderId)
+                        .orderByAsc("step_number"));
     }
 }

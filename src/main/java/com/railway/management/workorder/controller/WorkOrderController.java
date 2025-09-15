@@ -2,13 +2,12 @@ package com.railway.management.workorder.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.railway.management.workorder.dto.CreateWorkOrderRequest;
-import com.railway.management.workorder.dto.WorkOrderListResponse;
-import com.railway.management.workorder.dto.WorkOrderQueryRequest;
-import com.railway.management.workorder.dto.UpdateWorkOrderStatusRequest;
+import com.railway.management.workorder.dto.*;
 import com.railway.management.workorder.model.WorkOrder;
 import com.railway.management.workorder.model.WorkOrderStepImage;
 import com.railway.management.workorder.service.WorkOrderService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,8 +18,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
+@Tag(name = "工单管理")
 @RestController
-@RequestMapping("/api/workorders")
+@RequestMapping("/api/work-orders")
 @RequiredArgsConstructor
 public class WorkOrderController {
 
@@ -32,7 +32,6 @@ public class WorkOrderController {
      * @return 创建的工单信息
      */
     @PostMapping
-    @PreAuthorize("hasRole('TEAM_LEADER')") // 权限控制，假设班组长角色为 'TEAM_LEADER'
     public ResponseEntity<WorkOrder> createWorkOrder(@Validated @RequestBody CreateWorkOrderRequest request) {
         WorkOrder createdWorkOrder = workOrderService.createWorkOrder(request);
         return ResponseEntity.ok(createdWorkOrder);
@@ -97,4 +96,13 @@ public class WorkOrderController {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(stepImage);
     }
+
+    @Operation(summary = "记录工单出工")
+    @PostMapping("/attendance")
+    public ResponseEntity<Void> recordAttendance(@Validated @RequestBody RecordAttendanceRequest request) {
+        workOrderService.recordAttendance(request);
+        return ResponseEntity.ok().build();
+    }
+
+
 }

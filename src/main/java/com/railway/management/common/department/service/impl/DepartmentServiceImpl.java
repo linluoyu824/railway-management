@@ -3,25 +3,22 @@ package com.railway.management.common.department.service.impl;
 import cn.hutool.core.lang.tree.Tree;
 import cn.hutool.core.lang.tree.TreeNode;
 import cn.hutool.core.lang.tree.TreeUtil;
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.railway.management.common.department.dto.DepartmentCreateDto;
 import com.railway.management.common.department.dto.DepartmentImportDto;
 import com.railway.management.common.department.mapper.DepartmentMapper;
 import com.railway.management.common.department.model.Department;
 import com.railway.management.common.department.service.DepartmentService;
 import com.railway.management.common.dto.ExcelImportResult;
-import com.railway.management.common.user.model.User;
 import com.railway.management.common.user.dto.UserSimpleDto;
 import com.railway.management.common.user.mapper.UserMapper;
+import com.railway.management.common.user.model.User;
 import com.railway.management.utils.DepartmentImportListener;
-import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
-import com.alibaba.excel.EasyExcel;
-import com.alibaba.excel.ExcelWriter;
-import com.alibaba.excel.write.metadata.WriteSheet;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,15 +30,18 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
-public class DepartmentServiceImpl implements DepartmentService {
-
+public class DepartmentServiceImpl extends ServiceImpl<DepartmentMapper, Department> implements DepartmentService {
     private final DepartmentMapper departmentMapper;
 
     private final UserMapper userMapper; // 注入 UserMapper
 
-    @Override
+    public DepartmentServiceImpl(DepartmentMapper departmentMapper, UserMapper userMapper) {
+        this.departmentMapper = departmentMapper;
+        this.userMapper = userMapper;
+    }
+
     @Transactional
+    @Override
     public Department createDepartment(DepartmentCreateDto createDto) {
         // 1. 检查同级下是否存在同名部门
         QueryWrapper<Department> queryWrapper = new QueryWrapper<>();
@@ -169,16 +169,5 @@ public class DepartmentServiceImpl implements DepartmentService {
         response.setCharacterEncoding("utf-8");
         // 使用 URLEncoder 来处理中文文件名，防止乱码
         response.setHeader("Content-Disposition", "attachment; filename=\"" + URLEncoder.encode(fileName, StandardCharsets.UTF_8) + "\"");
-
-        try (ServletOutputStream outputStream = response.getOutputStream();
-             ExcelWriter excelWriter = EasyExcel.write(outputStream).build()) {
-
-            WriteSheet writeSheet = EasyExcel.writerSheet(0, "部门信息").head(DepartmentImportDto.class).build();
-            // 传递一个空列表来解决 `write` 方法的引用不明确问题
-            excelWriter.write(Collections.emptyList(), writeSheet);
-        }
-
-
     }
-
 }

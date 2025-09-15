@@ -16,4 +16,13 @@ public class AccessControlLog {
     private LocalDateTime timestamp;
     private boolean success;
     private String remark;
+    private String username;
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getUsername() {
+        return username;
+    }
 }

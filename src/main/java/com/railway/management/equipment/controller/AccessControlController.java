@@ -5,8 +5,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.railway.management.equipment.dto.AccessControlCreateDto;
 import com.railway.management.equipment.dto.AccessControlLogCreateDto;
 import com.railway.management.equipment.dto.AccessControlUpdateDto;
+import com.railway.management.equipment.dto.RequestAccessDto;
 import com.railway.management.equipment.model.AccessControl;
 import com.railway.management.equipment.model.AccessControlLog;
+import com.railway.management.equipment.model.AccessPermissionRequest;
 import com.railway.management.equipment.service.AccessControlService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -15,6 +17,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -94,5 +98,14 @@ public class AccessControlController {
         IPage<AccessControlLog> page = new Page<>(current, size);
         IPage<AccessControlLog> resultPage = accessControlService.getLogsByAccessControlId(page, id);
         return ResponseEntity.ok(resultPage);
+    }
+
+
+    @Operation(summary = "申请门禁权限")
+    @PostMapping("/request-access")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<AccessPermissionRequest> requestAccess(@Validated @RequestBody RequestAccessDto requestDto) {
+        AccessPermissionRequest permissionRequest = accessControlService.applyForPermission(requestDto);
+        return ResponseEntity.ok(permissionRequest);
     }
 }

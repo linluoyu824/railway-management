@@ -16,6 +16,11 @@ public class WorkOrder {
     @TableId(type = IdType.AUTO)
     private Long id;
 
+    /**
+     * 工单类型
+     */
+    private WorkOrderType type;
+
     // 设备信息
     private Long equipmentId;
     private String equipmentName;

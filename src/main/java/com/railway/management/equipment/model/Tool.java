@@ -13,4 +13,10 @@ public class Tool {
     private Long id;
 
     private String name;
+
+    private String nfcId;
+
+    private String model;
+
+    private ToolStatus status;
 }

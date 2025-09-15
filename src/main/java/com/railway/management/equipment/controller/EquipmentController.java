@@ -3,11 +3,7 @@ package com.railway.management.equipment.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.railway.management.common.dto.ExcelImportResult;
-import com.railway.management.equipment.dto.EquipmentDetailDto;
-import com.railway.management.equipment.dto.EquipmentAssignDto;
-import com.railway.management.equipment.dto.EquipmentImportDto;
-import com.railway.management.equipment.dto.EquipmentImportFailureDto;
-import com.railway.management.equipment.dto.EquipmentUpdateDto;
+import com.railway.management.equipment.dto.*;
 import com.railway.management.equipment.model.Equipment;
 import com.railway.management.equipment.service.EquipmentService;
 import com.railway.management.utils.ExcelResponseUtils;
@@ -18,6 +14,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -198,5 +196,14 @@ public class EquipmentController {
     ) {
         List<EquipmentDetailDto> equipmentList = equipmentService.getEquipmentsByAdminUser(adminUserId,departmentPath);
         return ResponseEntity.ok(equipmentList);
+    }
+
+
+    @Operation(summary = "编辑设备参数 (需要关联维修中工单)")
+    @PutMapping("/parameters")
+    @PreAuthorize("isAuthenticated()") // Further authorization is handled in the service layer
+    public ResponseEntity<Void> updateEquipmentParameters(@Validated @RequestBody EquipmentParameterUpdateRequest request) {
+        equipmentService.updateParameters(request);
+        return ResponseEntity.ok().build();
     }
 }

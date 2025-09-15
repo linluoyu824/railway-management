@@ -1,21 +1,32 @@
 package com.railway.management.equipment.service.impl;
 
+import cn.hutool.core.lang.Assert;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.railway.management.common.dto.ExcelImportResult;
-import com.railway.management.equipment.dto.EquipmentDetailDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.railway.management.equipment.dto.EquipmentImportDto;
-import com.railway.management.equipment.dto.EquipmentUpdateDto;
-import com.railway.management.equipment.mapper.EquipmentMapper;
-import com.railway.management.equipment.model.Equipment;
-import com.railway.management.equipment.service.EquipmentService;
+import com.railway.management.common.dto.ExcelImportResult;
 import com.railway.management.common.user.mapper.UserMapper;
+import com.railway.management.common.user.model.User;
+import com.railway.management.equipment.dto.*;
+import com.railway.management.equipment.mapper.EquipmentInspectionLogMapper;
+import com.railway.management.equipment.mapper.EquipmentMapper;
+import com.railway.management.equipment.mapper.ParameterHistoryMapper;
+import com.railway.management.equipment.model.Equipment;
+import com.railway.management.equipment.model.EquipmentInspectionLog;
+import com.railway.management.equipment.model.Parameter;
+import com.railway.management.equipment.model.ParameterHistory;
+import com.railway.management.equipment.service.EquipmentService;
+import com.railway.management.equipment.service.ParameterService;
 import com.railway.management.utils.EquipmentImportListener;
+import com.railway.management.utils.SecurityUtils;
+import com.railway.management.workorder.mapper.WorkOrderMapper;
+import com.railway.management.workorder.model.WorkOrder;
+import com.railway.management.workorder.model.WorkOrderStatus;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -25,26 +36,31 @@ import org.springframework.util.StringUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class EquipmentServiceImpl extends ServiceImpl<EquipmentMapper, Equipment> implements EquipmentService {
+
 
     private final UserMapper userMapper;
     private final ObjectMapper objectMapper;
+    private final EquipmentInspectionLogMapper inspectionLogMapper;
+    private final WorkOrderMapper workOrderMapper;
+    private final ParameterService parameterService;
+    private final ParameterHistoryMapper parameterHistoryMapper;
 
     @Value("${file.upload-dir.guides}")
     private String uploadDir;
 
-    public EquipmentServiceImpl(UserMapper userMapper, ObjectMapper objectMapper) {
-        this.userMapper = userMapper;
-        this.objectMapper = objectMapper;
-    }
+
 
     @Override
     public IPage<Equipment> listEquipment(IPage<Equipment> page) {
@@ -172,5 +188,102 @@ public class EquipmentServiceImpl extends ServiceImpl<EquipmentMapper, Equipment
     public List<EquipmentDetailDto> getEquipmentsByAdminUser(Long adminUserId, String departmentPath) {
 
         return baseMapper.selectDetailsByAdminUserId(adminUserId,departmentPath);
+    }
+
+    @Override
+    @Transactional
+    public EquipmentInspectionLog processNfcScan(String nfcId) {
+        Assert.notBlank(nfcId, "NFC ID不能为空");
+
+        // 1. 根据NFC ID查找设备
+        Equipment equipment = baseMapper.selectOne(new QueryWrapper<Equipment>().eq("nfc_id", nfcId));
+        Assert.notNull(equipment, "未找到NFC ID为 {} 的设备", nfcId);
+
+        // 2. 获取当前用户
+        User currentUser = SecurityUtils.getCurrentUser();
+
+        // 3. 创建并保存巡检日志
+        EquipmentInspectionLog log = new EquipmentInspectionLog();
+        log.setEquipmentId(equipment.getId());
+        log.setEquipmentName(equipment.getName());
+        log.setInspectorId(currentUser.getId());
+        log.setInspectorName(currentUser.getUsername());
+        log.setInspectionTime(LocalDateTime.now());
+        // log.setRemark("NFC自动巡检"); // You can add remarks if needed
+
+        inspectionLogMapper.insert(log);
+        return log;
+    }
+
+    @Override
+    @Transactional
+    public void updateParameters(EquipmentParameterUpdateRequest request) {
+        Long equipmentId = request.getEquipmentId();
+
+        // 1. 检查是否存在与该设备关联的、状态为“维修中”的工单
+        QueryWrapper<WorkOrder> workOrderWrapper = new QueryWrapper<WorkOrder>()
+                .eq("equipment_id", equipmentId)
+                .eq("status", WorkOrderStatus.IN_PROGRESS)
+                .last("LIMIT 1");
+        WorkOrder activeWorkOrder = workOrderMapper.selectOne(workOrderWrapper);
+        Assert.notNull(activeWorkOrder, "设备 {} 没有处于“维修中”状态的工单，无法编辑参数", equipmentId);
+
+        User currentUser = SecurityUtils.getCurrentUser();
+
+        for (ParameterUpdateDto paramUpdate : request.getParameters()) {
+            // 2. 获取要更新的当前参数
+            Parameter existingParam = parameterService.getById(paramUpdate.getParameterId());
+            Assert.notNull(existingParam, "ID为 {} 的参数不存在", paramUpdate.getParameterId());
+            Assert.isTrue(existingParam.getEquipmentId().equals(equipmentId),
+                    "参数 {} 不属于设备 {}", existingParam.getName(), equipmentId);
+
+            // 3. 如果值有变化，则记录历史并更新
+            if (!existingParam.getValue().equals(paramUpdate.getValue())) {
+                // 3.1 创建历史记录
+                ParameterHistory history = new ParameterHistory();
+                history.setEquipmentId(equipmentId);
+                history.setParameterId(existingParam.getId());
+                history.setParameterName(existingParam.getName());
+                history.setOldValue(existingParam.getValue());
+                history.setNewValue(paramUpdate.getValue());
+                history.setWorkOrderId(activeWorkOrder.getId());
+                history.setUpdatedBy(currentUser.getId());
+                history.setUpdatedByName(currentUser.getUsername());
+                history.setUpdateTime(LocalDateTime.now());
+                parameterHistoryMapper.insert(history);
+
+                // 3.2 更新参数值
+                existingParam.setValue(paramUpdate.getValue());
+                parameterService.updateById(existingParam);
+            }
+        }
+    }
+
+
+    @Override
+    @Transactional
+    public Equipment createFromNfc(EquipmentCreateNfcDto dto) {
+        Assert.notBlank(dto.getNfcId(), "NFC ID不能为空");
+        Assert.notBlank(dto.getName(), "新设备名称不能为空");
+        Assert.notBlank(dto.getCode(), "新设备编码不能为空");
+        Assert.notNull(dto.getDepartmentId(), "所属部门不能为空");
+
+        // 1. Check for duplicates
+        Assert.isFalse(this.exists(new QueryWrapper<Equipment>().eq("nfc_id", dto.getNfcId())),
+                "NFC ID {} 已被注册", dto.getNfcId());
+        Assert.isFalse(this.exists(new QueryWrapper<Equipment>().eq("code", dto.getCode())),
+                "设备编码 {} 已存在", dto.getCode());
+
+        // 2. Create and save
+        Equipment equipment = new Equipment();
+        equipment.setNfcId(dto.getNfcId());
+        equipment.setName(dto.getName());
+        equipment.setCode(dto.getCode());
+        equipment.setDepartmentId(dto.getDepartmentId());
+        equipment.setStatus(EquipmentStatus.NORMAL); // Default status
+        this.save(equipment);
+
+        log.info("通过NFC成功注册新设备: {}", equipment.getName());
+        return equipment;
     }
 }
