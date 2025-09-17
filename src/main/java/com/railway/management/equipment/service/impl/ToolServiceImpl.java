@@ -13,12 +13,13 @@ import com.railway.management.equipment.model.ToolStatus;
 import com.railway.management.equipment.service.ToolService;
 import com.railway.management.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ToolServiceImpl extends ServiceImpl<ToolMapper, Tool> implements ToolService {

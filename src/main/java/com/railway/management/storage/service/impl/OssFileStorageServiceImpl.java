@@ -31,7 +31,7 @@ public class OssFileStorageServiceImpl implements FileStorageService {
         if (originalFilename != null && originalFilename.contains(".")) {
             extension = originalFilename.substring(originalFilename.lastIndexOf("."));
         }
-        String objectName = "images/" + UUID.randomUUID().toString() + extension;
+        String objectName = "images/" + UUID.randomUUID() + extension;
 
         // Use try-with-resources to ensure the input stream is closed
         try (InputStream inputStream = file.getInputStream()) {

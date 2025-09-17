@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.railway.management.workorder.mapper.WorkOrderAssigneeMapper">
+
+    <insert id="insertBatch">
+        INSERT INTO work_order_assignee (work_order_id, user_id)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.workOrderId}, #{item.userId})
+        </foreach>
+    </insert>
+
+    <!-- 根据工单ID删除关联的维修人员 -->
+    <delete id="deleteByWorkOrderId">
+        DELETE FROM work_order_assignee WHERE work_order_id = #{workOrderId}
+    </delete>
+
+    <!-- 根据工单ID查询关联的维修人员ID列表 -->
+    <select id="selectUserIdsByWorkOrderId" resultType="java.lang.Long">
+        SELECT user_id FROM work_order_assignee WHERE work_order_id = #{workOrderId}
+    </select>
+</mapper>

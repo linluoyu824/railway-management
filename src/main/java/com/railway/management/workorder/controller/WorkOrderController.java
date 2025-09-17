@@ -2,13 +2,17 @@ package com.railway.management.workorder.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.railway.management.workorder.dto.*;
+import com.railway.management.workorder.dto.CreateWorkOrderRequest;
+import com.railway.management.workorder.dto.RecordAttendanceRequest;
+import com.railway.management.workorder.dto.UpdateWorkOrderStatusRequest;
+import com.railway.management.workorder.dto.WorkOrderQueryDto;
 import com.railway.management.workorder.model.WorkOrder;
 import com.railway.management.workorder.model.WorkOrderStepImage;
 import com.railway.management.workorder.service.WorkOrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -65,13 +69,13 @@ public class WorkOrderController {
     /**
      * 查询工单列表
      * @param page 分页参数 (e.g., ?current=1&size=10)
-     * @param query 查询参数
+     * @param queryDto 查询参数
      * @return 分页后的工单列表
      */
-    @GetMapping
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<IPage<WorkOrderListResponse>> listWorkOrders(Page<WorkOrder> page, WorkOrderQueryRequest query) {
-        IPage<WorkOrderListResponse> result = workOrderService.listWorkOrders(query, page);
+    @Operation(summary = "分页查询工单列表")
+    @GetMapping("/getPage")
+    public ResponseEntity<IPage<WorkOrder>> getPage(@ParameterObject Page<WorkOrder> page, @ParameterObject WorkOrderQueryDto queryDto) {
+        IPage<WorkOrder> result = workOrderService.getPage(page, queryDto);
         return ResponseEntity.ok(result);
     }
 

@@ -2,10 +2,7 @@ package com.railway.management.equipment.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.railway.management.equipment.dto.AccessControlCreateDto;
-import com.railway.management.equipment.dto.AccessControlLogCreateDto;
-import com.railway.management.equipment.dto.AccessControlUpdateDto;
-import com.railway.management.equipment.dto.RequestAccessDto;
+import com.railway.management.equipment.dto.*;
 import com.railway.management.equipment.model.AccessControl;
 import com.railway.management.equipment.model.AccessControlLog;
 import com.railway.management.equipment.model.AccessPermissionRequest;
@@ -107,5 +104,15 @@ public class AccessControlController {
     public ResponseEntity<AccessPermissionRequest> requestAccess(@Validated @RequestBody RequestAccessDto requestDto) {
         AccessPermissionRequest permissionRequest = accessControlService.applyForPermission(requestDto);
         return ResponseEntity.ok(permissionRequest);
+    }
+
+    @Operation(summary = "审批门禁权限申请 (同意/拒绝)")
+    @PutMapping("/permission-requests/{id}/approval")
+    @PreAuthorize("isAuthenticated()") // 具体的审批人权限在Service层校验
+    public ResponseEntity<AccessPermissionRequest> handlePermissionRequestApproval(
+            @Parameter(description = "权限申请ID", required = true) @PathVariable Long id,
+            @Validated @RequestBody ApprovePermissionRequestDto approveDto) {
+        AccessPermissionRequest updatedRequest = accessControlService.handlePermissionRequestApproval(id, approveDto);
+        return ResponseEntity.ok(updatedRequest);
     }
 }

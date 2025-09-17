@@ -1,4 +1,4 @@
-﻿package com.railway.management.common.section.mapper;
+package com.railway.management.common.section.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.railway.management.common.section.model.Section;

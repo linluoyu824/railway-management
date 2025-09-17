@@ -66,5 +66,17 @@ public interface AccessControlService extends IService<AccessControl> {
      */
     AccessControl createFromNfc(AccessControlCreateNfcDto dto);
 
+    /**
+     * 申请门禁权限
+     * @param requestDto dto 工具ID与人员ID集合
+     * @return 权限申请实体
+     */
     AccessPermissionRequest applyForPermission(RequestAccessDto requestDto);
+    /**
+     * 审批门禁权限申请
+     * @param permissionRequestId 权限申请ID
+     * @param approveDto 审批信息DTO
+     * @return 更新后的权限申请实体
+     */
+    AccessPermissionRequest handlePermissionRequestApproval(Long permissionRequestId, ApprovePermissionRequestDto approveDto);
 }
