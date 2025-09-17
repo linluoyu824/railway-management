@@ -6,5 +6,6 @@ package com.railway.management.equipment.model;
 public enum EquipmentStatus {
     IN_USE,      // 在用
     MAINTENANCE, // 维修中
-    RETIRED      // 已报废
+    RETIRED,      // 已报废
+    NORMAL
 }

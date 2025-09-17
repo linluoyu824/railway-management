@@ -9,7 +9,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.railway</groupId>
-    <artifactId>railway-management</artifactId>
+    <artifactId>railway-management-system</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>railway-management</name>

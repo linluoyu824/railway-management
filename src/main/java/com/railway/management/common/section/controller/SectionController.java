@@ -1,4 +1,4 @@
-﻿package com.railway.management.common.section.controller;
+package com.railway.management.common.section.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -10,22 +10,20 @@ import com.railway.management.common.section.dto.SectionUpdateDto;
 import com.railway.management.common.section.model.Section;
 import com.railway.management.common.section.service.SectionService;
 import com.railway.management.utils.ExcelResponseUtils;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/sections")
@@ -117,6 +115,8 @@ public class SectionController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("导入过程中发生错误：" + e.getMessage());
         }
     }
+
+
     @GetMapping("/template")
     @Operation(summary = "下载区段导入模板", description = "下载用于批量导入区段的Excel模板文件")
     public void downloadTemplate(HttpServletResponse response) throws IOException {

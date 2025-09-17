@@ -14,10 +14,7 @@ import com.railway.management.equipment.dto.*;
 import com.railway.management.equipment.mapper.EquipmentInspectionLogMapper;
 import com.railway.management.equipment.mapper.EquipmentMapper;
 import com.railway.management.equipment.mapper.ParameterHistoryMapper;
-import com.railway.management.equipment.model.Equipment;
-import com.railway.management.equipment.model.EquipmentInspectionLog;
-import com.railway.management.equipment.model.Parameter;
-import com.railway.management.equipment.model.ParameterHistory;
+import com.railway.management.equipment.model.*;
 import com.railway.management.equipment.service.EquipmentService;
 import com.railway.management.equipment.service.ParameterService;
 import com.railway.management.utils.EquipmentImportListener;
@@ -27,6 +24,7 @@ import com.railway.management.workorder.model.WorkOrder;
 import com.railway.management.workorder.model.WorkOrderStatus;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -45,6 +43,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EquipmentServiceImpl extends ServiceImpl<EquipmentMapper, Equipment> implements EquipmentService {

@@ -1,4 +1,4 @@
-﻿package com.railway.management.common.section.service.impl;
+package com.railway.management.common.section.service.impl;
 
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
@@ -15,18 +15,16 @@ import com.railway.management.common.section.model.Section;
 import com.railway.management.common.section.service.SectionService;
 import com.railway.management.common.user.mapper.UserMapper;
 import com.railway.management.utils.SectionImportListener;
-
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor

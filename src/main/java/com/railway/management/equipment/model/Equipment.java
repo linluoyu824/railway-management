@@ -86,5 +86,6 @@ public class Equipment {
 
     @TableField(value = "updated_by", fill = FieldFill.INSERT_UPDATE)
     private String updatedBy;
+    private @NotBlank String code;
 
 }

@@ -58,5 +58,12 @@ public interface WorkOrderService {
      */
     void recordAttendance(RecordAttendanceRequest request);
 
+    /**
+     * 分页查询工单列表
+     * @param page 分页对象
+     * @param queryDto 查询条件
+     */
+    IPage<WorkOrder> getPage(Page<WorkOrder> page, WorkOrderQueryDto queryDto);
+
     List<WorkOrderStepImage> getStepImagesByWorkOrderId(Long workOrderId);
 }

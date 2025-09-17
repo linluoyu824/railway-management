@@ -1,21 +1,21 @@
 package com.railway.management.workorder.model;
 
-/**
- * 工单类型枚举
- */
-public enum WorkOrderType {
-    /**
-     * 培训工单
-     */
-    TRAINING,
+import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.railway.management.common.enums.BaseEnum;
+import lombok.Getter;
 
-    /**
-     * 作业工单
-     */
-    OPERATION,
+@Getter
+public enum WorkOrderType implements BaseEnum<Integer> {
+    TRAINING(1, "培训工单"),
+    OPERATION(2, "作业工单"),
+    INSPECTION(3, "巡查工单");
 
-    /**
-     * 巡查工单
-     */
-    INSPECTION
+    @EnumValue
+    private final Integer value;
+    private final String description;
+
+    WorkOrderType(Integer value, String description) {
+        this.value = value;
+        this.description = description;
+    }
 }

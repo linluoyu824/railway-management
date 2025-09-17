@@ -16,12 +16,10 @@ import com.railway.management.storage.service.FileStorageService;
 import com.railway.management.utils.SecurityUtils;
 import com.railway.management.workorder.dto.*;
 import com.railway.management.workorder.mapper.WorkAttendanceMapper;
+import com.railway.management.workorder.mapper.WorkOrderAssigneeMapper;
 import com.railway.management.workorder.mapper.WorkOrderMapper;
 import com.railway.management.workorder.mapper.WorkOrderStepImageMapper;
-import com.railway.management.workorder.model.WorkAttendance;
-import com.railway.management.workorder.model.WorkOrder;
-import com.railway.management.workorder.model.WorkOrderStatus;
-import com.railway.management.workorder.model.WorkOrderStepImage;
+import com.railway.management.workorder.model.*;
 import com.railway.management.workorder.service.WorkOrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +29,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -53,18 +52,18 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     private final EquipmentService equipmentService;
     private final ToolService toolService;
     private final WorkAttendanceMapper workAttendanceMapper;
+    private final WorkOrderAssigneeMapper workOrderAssigneeMapper;
 
     @Override
     @Transactional
     public WorkOrder createWorkOrder(CreateWorkOrderRequest request) {
         // 1. 获取当前用户信息 (发起人)
         User currentUser = SecurityUtils.getCurrentUser();
+        Assert.notNull(currentUser, "无法获取当前用户信息，请重新登录");
 
         // 2. 获取设备信息和关联的工作指导文件
         Equipment equipment = equipmentService.getById(request.getEquipmentId());
-        Assert.notNull(equipment, "设备不存在: " + request.getEquipmentId());
-
-        // 假设 Equipment 实体关联了 WorkInstruction
+        Assert.notNull(equipment, "ID为 {} 的设备不存在", request.getEquipmentId());
         WorkInstruction instruction = equipment.getWorkInstruction();
         Assert.notNull(instruction, "设备 " + equipment.getName() + " 没有关联的作业指导书");
 
@@ -89,25 +88,33 @@ public class WorkOrderServiceImpl implements WorkOrderService {
                 .setEquipmentId(request.getEquipmentId())
                 .setEquipmentName(equipment.getName())
                 .setDescription(request.getDescription())
-                .setCreatorId(currentUser.getId())
-                .setCreatorName(currentUser.getUsername())
                 .setAssigneeIds(assigneeIdsStr)
                 .setAssigneeNames(assigneeNamesStr)
-                .setWorkInstructionId(instruction.getId())
-                .setWorkInstructionName(instruction.getName())
-                .setWorkInstructionUrl(instruction.getUrl())
+                .setCreatorId(currentUser.getId())
+                .setCreatorName(currentUser.getUsername())
                 .setTools(toolNames)
-                .setStatus(WorkOrderStatus.DRAFT) // 新创建的工单默认为草稿状态
+                .setWorkInstructionId(instruction != null ? instruction.getId() : null)
+                .setWorkInstructionName(instruction != null ? instruction.getName() : null)
+                .setWorkInstructionUrl(instruction != null ? instruction.getUrl() : null)
+                .setStatus(WorkOrderStatus.DRAFT)
                 .setCreatedAt(LocalDateTime.now())
                 .setUpdatedAt(LocalDateTime.now());
 
         // 5. 保存到数据库
         workOrderMapper.insert(workOrder);
+
+        // 6. 保存工单与人员的关联关系
+        if (!assignees.isEmpty()) {
+            List<WorkOrderAssignee> relations = assignees.stream()
+                .map(assignee -> new WorkOrderAssignee(workOrder.getId(), assignee.getId()))
+                .collect(Collectors.toList());
+            workOrderAssigneeMapper.insertBatch(relations);
+        }
+
         log.info("新工单已创建, ID: {}, 类型: {}", workOrder.getId(), workOrder.getType());
 
         return workOrder;
     }
-
 
     @Override
     @Transactional
@@ -138,9 +145,10 @@ public class WorkOrderServiceImpl implements WorkOrderService {
             return attendance;
         }).collect(Collectors.toList());
 
-        // 5. 批量插入出工记录 (注意: IService 默认没有批量插入, 这里循环插入)
-        // 为提高性能, 可以在 WorkAttendanceMapper 中自定义一个批量插入方法
-        attendanceList.forEach(workAttendanceMapper::insert);
+        // 5. 批量插入出工记录
+        if (!attendanceList.isEmpty()) {
+            workAttendanceMapper.insert(attendanceList);
+        }
 
         log.info("为工单ID {} 记录了 {} 条 {} 类型的出工记录", request.getWorkOrderId(), attendanceList.size(), request.getAttendanceType());
     }
@@ -162,7 +170,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
         List<String> userRoles = authorities.stream()
                 .map(GrantedAuthority::getAuthority)
-                .toList();
+                .collect(Collectors.toList());
 
         // 3. 权限与状态流转校验
         if (newStatus == WorkOrderStatus.APPROVED) {
@@ -285,5 +293,23 @@ public class WorkOrderServiceImpl implements WorkOrderService {
                 new QueryWrapper<WorkOrderStepImage>()
                         .eq("work_order_id", workOrderId)
                         .orderByAsc("step_number"));
+    }
+
+    @Override
+    public IPage<WorkOrder> getPage(Page<WorkOrder> page, WorkOrderQueryDto queryDto) {
+        QueryWrapper<WorkOrder> wrapper = new QueryWrapper<>();
+
+        // 根据工单状态和类型进行筛选
+        wrapper.eq(queryDto.getStatus() != null, "status", queryDto.getStatus());
+        wrapper.eq(queryDto.getType() != null, "type", queryDto.getType());
+
+        // 根据描述进行模糊查询
+        // 建议：未来可以增加对设备名称、创建人等的筛选
+        wrapper.like(StringUtils.hasText(queryDto.getDescription()), "description", queryDto.getDescription());
+
+        // 按创建时间降序排序，确保最新的工单在前
+        wrapper.orderByDesc("created_at");
+
+        return workOrderMapper.selectPage(page, wrapper);
     }
 }
