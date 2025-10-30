@@ -9,6 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 public interface WorkOrderService {
 
@@ -66,4 +67,7 @@ public interface WorkOrderService {
     IPage<WorkOrder> getPage(Page<WorkOrder> page, WorkOrderQueryDto queryDto);
 
     List<WorkOrderStepImage> getStepImagesByWorkOrderId(Long workOrderId);
+
+    // 在 WorkOrderService 中添加统计方法
+    Map<String, Object> getWorkOrderStatistics();
 }

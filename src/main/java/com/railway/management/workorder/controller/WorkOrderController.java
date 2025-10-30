@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Map;
 
 @Tag(name = "工单管理")
 @RestController
@@ -32,6 +33,7 @@ public class WorkOrderController {
 
     /**
      * 创建工单 - 仅限班组长角色
+     *
      * @param request 请求体
      * @return 创建的工单信息
      */
@@ -43,7 +45,8 @@ public class WorkOrderController {
 
     /**
      * 更新工单状态
-     * @param id 工单ID
+     *
+     * @param id      工单ID
      * @param request 请求体
      * @return 更新后的工单信息
      */
@@ -56,6 +59,7 @@ public class WorkOrderController {
 
     /**
      * 删除工单 - 仅限草稿状态
+     *
      * @param id 工单ID
      * @return No Content
      */
@@ -68,7 +72,8 @@ public class WorkOrderController {
 
     /**
      * 查询工单列表
-     * @param page 分页参数 (e.g., ?current=1&size=10)
+     *
+     * @param page     分页参数 (e.g., ?current=1&size=10)
      * @param queryDto 查询参数
      * @return 分页后的工单列表
      */
@@ -81,10 +86,11 @@ public class WorkOrderController {
 
     /**
      * 为工单的特定步骤上传图片
-     * @param workOrderId 工单ID
-     * @param stepNumber 步骤编号
+     *
+     * @param workOrderId     工单ID
+     * @param stepNumber      步骤编号
      * @param stepDescription 步骤描述
-     * @param file 图片文件
+     * @param file            图片文件
      * @return 上传的图片信息
      */
     @PostMapping("/{workOrderId}/step-images")
@@ -108,5 +114,12 @@ public class WorkOrderController {
         return ResponseEntity.ok().build();
     }
 
+
+    // 在 WorkOrderController 中添加接口
+    @GetMapping("/statistics")
+    public ResponseEntity<Map<String, Object>> getWorkOrderStatistics() {
+        Map<String, Object> statistics = workOrderService.getWorkOrderStatistics();
+        return ResponseEntity.ok(statistics);
+    }
 
 }

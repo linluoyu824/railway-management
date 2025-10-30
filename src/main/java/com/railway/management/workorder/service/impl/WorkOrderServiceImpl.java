@@ -34,10 +34,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -307,9 +304,73 @@ public class WorkOrderServiceImpl implements WorkOrderService {
         // 建议：未来可以增加对设备名称、创建人等的筛选
         wrapper.like(StringUtils.hasText(queryDto.getDescription()), "description", queryDto.getDescription());
 
+        // 增加更多查询条件
+        wrapper.ge(queryDto.getStartTime() != null, "created_at", queryDto.getStartTime());
+        wrapper.le(queryDto.getEndTime() != null, "created_at", queryDto.getEndTime());
+        wrapper.like(StringUtils.hasText(queryDto.getCreatorName()), "creator_name", queryDto.getCreatorName());
+        wrapper.like(StringUtils.hasText(queryDto.getEquipmentName()), "equipment_name", queryDto.getEquipmentName());
+
+
         // 按创建时间降序排序，确保最新的工单在前
         wrapper.orderByDesc("created_at");
 
         return workOrderMapper.selectPage(page, wrapper);
     }
+
+    @Override
+    public Map<String, Object> getWorkOrderStatistics() {
+        Map<String, Object> statistics = new HashMap<>();
+
+        // 获取总工单数
+        int totalWorkOrders = Math.toIntExact(workOrderMapper.selectCount(null));
+        statistics.put("total", totalWorkOrders);
+
+        // 按状态统计工单数
+        Map<WorkOrderStatus, Integer> statusStatistics = new HashMap<>();
+        for (WorkOrderStatus status : WorkOrderStatus.values()) {
+            QueryWrapper<WorkOrder> wrapper = new QueryWrapper<>();
+            wrapper.eq("status", status);
+            int count = Math.toIntExact(workOrderMapper.selectCount(wrapper));
+            statusStatistics.put(status, count);
+        }
+        statistics.put("byStatus", statusStatistics);
+
+        // 按类型统计工单数
+        Map<WorkOrderType, Integer> typeStatistics = new HashMap<>();
+        for (WorkOrderType type : WorkOrderType.values()) {
+            QueryWrapper<WorkOrder> wrapper = new QueryWrapper<>();
+            wrapper.eq("type", type);
+            int count = Math.toIntExact(workOrderMapper.selectCount(wrapper));
+            typeStatistics.put(type, count);
+        }
+        statistics.put("byType", typeStatistics);
+
+        // 获取今日创建的工单数
+        LocalDateTime todayStart = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime todayEnd = LocalDateTime.now().withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+        QueryWrapper<WorkOrder> todayWrapper = new QueryWrapper<>();
+        todayWrapper.between("created_at", todayStart, todayEnd);
+        int todayWorkOrders = Math.toIntExact(workOrderMapper.selectCount(todayWrapper));
+        statistics.put("today", todayWorkOrders);
+
+        // 获取本周创建的工单数
+        LocalDateTime weekStart = LocalDateTime.now().minusDays(LocalDateTime.now().getDayOfWeek().getValue() - 1)
+                .withHour(0).withMinute(0).withSecond(0).withNano(0);
+        QueryWrapper<WorkOrder> weekWrapper = new QueryWrapper<>();
+        weekWrapper.between("created_at", weekStart, LocalDateTime.now());
+        int weekWorkOrders = Math.toIntExact(workOrderMapper.selectCount(weekWrapper));
+        statistics.put("thisWeek", weekWorkOrders);
+
+        // 获取本月创建的工单数
+        LocalDateTime monthStart = LocalDateTime.now().withDayOfMonth(1)
+                .withHour(0).withMinute(0).withSecond(0).withNano(0);
+        QueryWrapper<WorkOrder> monthWrapper = new QueryWrapper<>();
+        monthWrapper.between("created_at", monthStart, LocalDateTime.now());
+        int monthWorkOrders = Math.toIntExact(workOrderMapper.selectCount(monthWrapper));
+        statistics.put("thisMonth", monthWorkOrders);
+
+        return statistics;
+    }
+
+
 }
